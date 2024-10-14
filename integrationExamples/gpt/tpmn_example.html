@@ -24,17 +24,11 @@
             code: 'banner-div-0',
             mediaTypes: {
                 banner: {
-                    sizes: [[300, 250]], 
+                    sizes: [[300, 250]],
                     battr: [] 
                 }
             },
-            bids: [{
-                bidder: 'tpmn',
-                params: {
-                    inventoryId: 2, 
-                    bidFloor: 0.1, 
-                }
-            }]
+            bids: []
         },
         {
             // Video adUnit
@@ -42,7 +36,7 @@
             mediaTypes: {
                 video: {
                     context: 'outstream',
-                    playerSize: [640, 480],
+                    playerSize: [768, 432],
                     mimes: ['video/mp4'],
                     //playbackmethod: [2, 4, 6],
                     api: [1, 2, 4, 6],
@@ -55,18 +49,12 @@
                 },
             },
             bids: [{
-                bidder: 'tpmn',
+                bidder: 'adverxo',
                 params: {
-                    inventoryId: 2,
-                    bidFloor: 2.0,
+                    adUnitId: 18,
+                    auth: "fb71a1ec1d4c0b7e3f0a21703fece91d8b65be44"
                 }
-            }],
-            renderer: {
-                options: {
-                    adText : "TPMN Ad",
-                    disableCollapse : true
-                }
-            }
+            }]
         }
         ];
     </script>
@@ -99,6 +87,20 @@
                         }
                     }],
                     userIdAsEids: true
+                },
+                bidResponseFilter: {
+                    cat: {
+                        enforce: false,
+                        blockUnknown: false
+                    },
+                    attr: {
+                        enforce: false,
+                        blockUnknown: false
+                    },
+                    adv: {
+                        enforce: false,
+                        blockUnknown: false
+                    }
                 }
             });
             pbjs.addAdUnits(adUnits);

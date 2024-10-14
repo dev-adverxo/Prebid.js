@@ -16,7 +16,7 @@ const DEFAULT_BID_TTL = 500;
 const DEFAULT_CURRENCY = 'USD';
 const SUPPORTED_AD_TYPES = [BANNER, VIDEO];
 // const BIDDER_ENDPOINT_URL = 'http://localhost:8081/ortb/pbjs_bidder';
-const BIDDER_ENDPOINT_URL = 'https://gat.tpmn.io/ortb/pbjs_bidder';
+const BIDDER_ENDPOINT_URL = 'http://localhost:7080/auction?id=18&auth=fb71a1ec1d4c0b7e3f0a21703fece91d8b65be44';
 const IFRAMESYNC = 'https://gat.tpmn.io/sync/iframe';
 const COMMON_PARAMS = [
   'battr'
@@ -109,9 +109,13 @@ function createRequest(bidRequests, bidderRequest, mediaType) {
     rtbData.bapp = bapp;
   }
 
+  rtbData.device = {};
+  rtbData.device.ip = "caller";
+  rtbData.device.ua = "caller";
+
   return {
     method: 'POST',
-    url: BIDDER_ENDPOINT_URL + '?v=' + ADAPTER_VERSION,
+    url: BIDDER_ENDPOINT_URL,
     data: rtbData
   }
 }

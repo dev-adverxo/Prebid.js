@@ -13,22 +13,32 @@
     <script async src="../../build/dev/prebid.js"></script>
     <script async src="https://www.googletagservices.com/tag/js/gpt.js"></script>
     <script>
-        var FAILSAFE_TIMEOUT = 3300;
-        var PREBID_TIMEOUT = 1000;
+        var FAILSAFE_TIMEOUT = 10*3300;
+        var PREBID_TIMEOUT = 10*1000;
 
         var adUnits = [
         {
             code: 'div-gpt-ad-1460505748561-0',
             mediaTypes: {
-                banner: {
-                    sizes: [[300, 300]],
+                video: {
+                  context: 'outstream', // or 'outstream',
+                  placement: 1,
+                  startdelay: 0,
+                  mimes: ['video/mp4'],
+                  playerSize: [768, 432] // video player size
+                }
+            },
+           renderer: {
+                options: {
+                    adText : "TPMN Ad",
+                    disableCollapse : true
                 }
             },
             // Replace this object to test a new Adapter!
             bids: [{
                 bidder: 'adverxo',
                 params: {
-                    adUnitId: 15,
+                    adUnitId: 18,
                     auth: "fb71a1ec1d4c0b7e3f0a21703fece91d8b65be44"
                 }
             }]
@@ -62,6 +72,9 @@
                         enforce: false,
                         blockUnknown: false
                     }
+                },
+                cache: {
+                    url: 'https://prebid.adnxs.com/pbc/v1/cache'
                 }
             });
 

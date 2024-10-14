@@ -3,10 +3,12 @@ import {config} from 'src/config';
 import {registerBidder} from 'src/adapters/bidderFactory';
 import {BANNER, VIDEO, NATIVE} from 'src/mediaTypes.js';
 import { ortbConverter as OrtbConverter } from '../libraries/ortbConverter/converter.js';
+import { Renderer } from '../src/Renderer.js';
 
 const BIDDER_CODE = 'adverxo';
 const GVLID = 0; // TODO, NoCommit, 9/10/24: Ponerlo
 
+const VIDEO_RENDERER_URL = 'https://acdn.adnxs.com/video/outstream/ANOutstreamVideo.js';
 const ENDPOINT_URL_AD_UNIT_PLACEHOLDER = '{AD_UNIT}';
 const ENDPOINT_URL_AUTH_PLACEHOLDER = '{AUTH}';
 const ENDPOINT_URL = `http://localhost:7080/auction?id=${ENDPOINT_URL_AD_UNIT_PLACEHOLDER}&auth=${ENDPOINT_URL_AUTH_PLACEHOLDER}`; // TODO, NoCommit, 9/10/24: Poner el dominio correcto
@@ -49,6 +51,38 @@ const ortbConverter = OrtbConverter({
       return buildBidResponse(bid, context);
   }
 });
+
+const that = this;
+
+const videoUtils = {
+  createOutstreamVideoRenderer: function (bid) {
+    const renderer = Renderer.install({
+      id: bid.bidId,
+      url: VIDEO_RENDERER_URL,
+      loaded: false,
+      adUnitCode: bid.adUnitCode
+    })
+
+    try {
+      renderer.setRender(this.outstreamRender.bind(this));
+    } catch (err) {
+      utils.logWarn('Prebid Error calling setRender on renderer', err);
+    }
+
+    return renderer;
+  },
+
+  outstreamRender: function (bid, doc) {
+    bid.renderer.push(() => {
+      const win = (doc) ? doc.defaultView : window;
+
+      win.ANOutstreamVideo.renderAd({
+        targetId: bid.adUnitCode,
+        adResponse: { content: bid.vastXml }
+      });
+    });
+  }
+};
 
 const userSyncUtils = {
   /**
@@ -250,10 +284,21 @@ export const spec = {
         return [];
       }
 
-      return ortbConverter.fromORTB({
+      const bids = ortbConverter.fromORTB({
         response: serverResponse.body,
         request: bidRequest.data,
       }).bids;
+
+      return bids.map((bid) => {
+        const thisRequest = utils.getBidRequest(bid.requestId, [bidRequest]);
+        const context = utils.deepAccess(thisRequest, 'mediaTypes.video.context');
+
+        if (bid.mediaType === 'video' && context === 'outstream') {
+          bid.renderer = videoUtils.createOutstreamVideoRenderer(bid);
+        }
+
+        return bid;
+      });
     },
 
     /**
