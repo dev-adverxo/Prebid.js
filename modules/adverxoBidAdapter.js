@@ -8,6 +8,7 @@ import { Renderer } from '../src/Renderer.js';
 const BIDDER_CODE = 'adverxo';
 const GVLID = 0; // TODO, NoCommit, 9/10/24: Ponerlo
 
+// TODO, NoCommit, 16/10/24: Podemos usar esto?
 const VIDEO_RENDERER_URL = 'https://acdn.adnxs.com/video/outstream/ANOutstreamVideo.js';
 const ENDPOINT_URL_AD_UNIT_PLACEHOLDER = '{AD_UNIT}';
 const ENDPOINT_URL_AUTH_PLACEHOLDER = '{AUTH}';
@@ -33,6 +34,7 @@ const ortbConverter = OrtbConverter({
      utils.deepSetValue(request, 'device.ip', "caller");
      utils.deepSetValue(request, 'regs', adverxoUtils.buildOrtbRegulations(bidderRequest));
      utils.deepSetValue(request, 'ext.avx_usersync', adverxoUtils.getAllowedUserSyncMethod(bidderRequest));
+     utils.deepSetValue(request, 'ext.avx_add_vast_url', 1);
 
      return request;
   },
@@ -48,11 +50,15 @@ const ortbConverter = OrtbConverter({
         }
       }
 
-      return buildBidResponse(bid, context);
+      const result = buildBidResponse(bid, context)
+
+      if(bid?.ext?.avx_vast_url) {
+        result.vastUrl = bid.ext.avx_vast_url;
+      }
+
+      return result;
   }
 });
-
-const that = this;
 
 const videoUtils = {
   createOutstreamVideoRenderer: function (bid) {
