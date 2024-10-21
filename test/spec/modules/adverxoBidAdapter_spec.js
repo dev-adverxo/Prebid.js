@@ -22,7 +22,7 @@ describe('Adverxo Bid Adapter', () => {
       mediaTypes: {banner: {sizes: [[300, 250]]}},
       params: {
         adUnitId: 1,
-        auth: "authExample"
+        auth: 'authExample'
       },
       bidderRequestId: 'test-bidder-request-id',
     },
@@ -40,7 +40,7 @@ describe('Adverxo Bid Adapter', () => {
       {
         id: 1,
         required: 1,
-        img: {type: 3, w: 150, h: 50,}
+        img: {type: 3, w: 150, h: 50}
       },
       {
         id: 2,
@@ -66,7 +66,7 @@ describe('Adverxo Bid Adapter', () => {
       nativeOrtbRequest,
       params: {
         adUnitId: 1,
-        auth: "authExample"
+        auth: 'authExample'
       }
     },
   ];
@@ -97,7 +97,7 @@ describe('Adverxo Bid Adapter', () => {
       },
       params: {
         adUnitId: 1,
-        auth: "authExample"
+        auth: 'authExample'
       }
     }
   ];
@@ -128,7 +128,7 @@ describe('Adverxo Bid Adapter', () => {
       },
       params: {
         adUnitId: 1,
-        auth: "authExample"
+        auth: 'authExample'
       }
     }
   ];
@@ -148,7 +148,7 @@ describe('Adverxo Bid Adapter', () => {
     it('should validate bid request with valid params', () => {
       const validBid = makeBidRequestWithParams({
         adUnitId: 1,
-        auth: "authExample"
+        auth: 'authExample'
       });
 
       const isValid = spec.isBidRequestValid(validBid);
@@ -166,7 +166,7 @@ describe('Adverxo Bid Adapter', () => {
 
     it('should not validate bid request with missing param(adUnitId)', () => {
       const invalidBid = makeBidRequestWithParams({
-        auth: "authExample"
+        auth: 'authExample'
       });
 
       const isValid = spec.isBidRequestValid(invalidBid);
@@ -190,8 +190,8 @@ describe('Adverxo Bid Adapter', () => {
       const request = spec.buildRequests(bannerBidRequests, bannerBidderRequest)[0];
 
       expect(request.method).to.equal('POST');
-      expect(request.url).to.equal("http://localhost:7080/auction?id=1&auth=authExample");
-      expect(request.data.device.ip).to.equal("caller");
+      expect(request.url).to.equal('http://localhost:7080/auction?id=1&auth=authExample');
+      expect(request.data.device.ip).to.equal('caller');
       expect(request.data.ext.avx_add_vast_url).to.equal(1);
     });
 
@@ -200,7 +200,7 @@ describe('Adverxo Bid Adapter', () => {
         const request = spec.buildRequests(nativeBidRequests, nativeBidderRequest)[0];
 
         expect(request.method).to.equal('POST');
-        expect(request.url).to.equal("http://localhost:7080/auction?id=1&auth=authExample");
+        expect(request.url).to.equal('http://localhost:7080/auction?id=1&auth=authExample');
 
         const nativeRequest = JSON.parse(request.data.imp[0]['native'].request);
 
@@ -231,7 +231,7 @@ describe('Adverxo Bid Adapter', () => {
         const request = spec.buildRequests(videoInstreamBidRequests, videoInstreamBidderRequest)[0];
 
         expect(request.method).to.equal('POST');
-        expect(request.url).to.equal("http://localhost:7080/auction?id=1&auth=authExample");
+        expect(request.url).to.equal('http://localhost:7080/auction?id=1&auth=authExample');
 
         const ortbRequest = request.data;
 
@@ -496,11 +496,11 @@ describe('Adverxo Bid Adapter', () => {
             native: {
               ortb: {
                 assets: [
-                  {id: 2, title: {text: "Title"}},
-                  {id: 3, data: {value: "Description"}},
-                  {id: 1, img: {url: "http://example.com?img", w: 150, h: 50}}
+                  {id: 2, title: {text: 'Title'}},
+                  {id: 3, data: {value: 'Description'}},
+                  {id: 1, img: {url: 'http://example.com?img', w: 150, h: 50}}
                 ],
-                link: {url: "http://example.com?link"}
+                link: {url: 'http://example.com?link'}
               }
             }
           }
@@ -531,9 +531,9 @@ describe('Adverxo Bid Adapter', () => {
                     h: 250,
                     mtype: 2,
                     adomain: ['test.com'],
-                    adm: "vastXml",
+                    adm: 'vastXml',
                     ext: {
-                      avx_vast_url: "vastUrl"
+                      avx_vast_url: 'vastUrl'
                     }
                   },
                 ],
@@ -603,7 +603,7 @@ describe('Adverxo Bid Adapter', () => {
 
         const expectedBids = [
           {
-            avxVideoRendererUrl: "videoRendererUrl",
+            avxVideoRendererUrl: 'videoRendererUrl',
             cpm: 2,
             creativeId: 'creative-id',
             creative_id: 'creative-id',
@@ -634,7 +634,6 @@ describe('Adverxo Bid Adapter', () => {
       });
     }
   });
-
 
   describe('getUserSyncs', () => {
     it('should return an empty array if no server responses are provided', () => {

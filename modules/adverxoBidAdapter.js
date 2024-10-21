@@ -1,9 +1,19 @@
-import * as utils from 'src/utils';
-import {config} from 'src/config';
-import {registerBidder} from 'src/adapters/bidderFactory';
-import {BANNER, VIDEO, NATIVE} from 'src/mediaTypes.js';
+import * as utils from '../src/utils.js';
+import {config} from '../src/config.js';
+import {registerBidder} from '../src/adapters/bidderFactory.js';
+import {BANNER, VIDEO, NATIVE} from '../src/mediaTypes.js';
 import {ortbConverter as OrtbConverter} from '../libraries/ortbConverter/converter.js';
 import {Renderer} from '../src/Renderer.js';
+
+/**
+ * @typedef {import('../src/adapters/bidderFactory.js').Bid} Bid
+ * @typedef {import('../src/adapters/bidderFactory.js').BidRequest} BidRequest
+ * @typedef {import('../src/adapters/bidderFactory.js').ServerRequest} ServerRequest
+ * @typedef {import('../src/adapters/bidderFactory.js').ServerResponse} ServerResponse
+ * @typedef {import('../src/auction.js').BidderRequest} BidderRequest
+ * @typedef {import('../src/adapters/bidderFactory.js').SyncOptions} SyncOptions
+ * @typedef {import('../src/adapters/bidderFactory.js').UserSync} UserSync
+ */
 
 const BIDDER_CODE = 'adverxo';
 const GVLID = 0; // TODO, NoCommit, 9/10/24: Ponerlo
@@ -33,7 +43,7 @@ const ortbConverter = OrtbConverter({
   request: function request(buildRequest, imps, bidderRequest, context) {
     const request = buildRequest(imps, bidderRequest, context);
 
-    utils.deepSetValue(request, 'device.ip', "caller");
+    utils.deepSetValue(request, 'device.ip', 'caller');
     utils.deepSetValue(request, 'regs', adverxoUtils.buildOrtbRegulations(bidderRequest));
     utils.deepSetValue(request, 'ext.avx_usersync', adverxoUtils.getAllowedUserSyncMethod(bidderRequest));
     utils.deepSetValue(request, 'ext.avx_add_vast_url', 1);
@@ -98,12 +108,6 @@ const videoUtils = {
 };
 
 const userSyncUtils = {
-  /**
-   * Checks if configuration allows specified sync method
-   * @param syncRule {Object}
-   * @param bidderCode {string}
-   * @returns {boolean}
-   */
   isSyncAllowed: function (syncRule, bidderCode) {
     if (!syncRule) {
       return false;
@@ -115,11 +119,6 @@ const userSyncUtils = {
     return utils.contains(bidders, bidderCode) === rule;
   },
 
-  /**
-   * Get preferred user-sync method based on publisher configuration
-   * @param bidderCode {string}
-   * @returns {number|null}
-   */
   getAllowedSyncMethod: function (bidderCode) {
     if (!config.getConfig('userSync.syncEnabled')) {
       return null;
@@ -138,35 +137,17 @@ const userSyncUtils = {
 };
 
 const adverxoUtils = {
-  /**
-   * Build auctionUrl for AdUnit
-   *
-   * @param {number} adUnitId
-   * @param {string} adUnitAuth
-   * @returns string
-   */
   buildAuctionUrl: function (adUnitId, adUnitAuth) {
     return ENDPOINT_URL
       .replace(ENDPOINT_URL_AD_UNIT_PLACEHOLDER, adUnitId)
       .replace(ENDPOINT_URL_AUTH_PLACEHOLDER, adUnitAuth);
   },
 
-  /**
-   * Extract userSync from ortb response
-   *
-   * @param {ServerResponse} serverResponse
-   * @return {UserSync[]} The user syncs which should be dropped.
-   */
   extractUserSyncFromResponse: function (serverResponse) {
     const userSyncs = (serverResponse?.body?.ext?.avx_usersync || []);
     return userSyncs.map(({url, type}) => ({type: PBS_SYNC_TYPES[type], url: url}))
   },
 
-  /**
-   * Create user privacy regulations object
-   * @param bidderRequest {BidderRequest}
-   * @returns {{regs: Object}} ortb regulations object
-   */
   buildOrtbRegulations: function (bidderRequest) {
     const {gdprConsent, uspConsent, gppConsent} = bidderRequest;
     const ext = {};
@@ -191,22 +172,11 @@ const adverxoUtils = {
     };
   },
 
-  /**
-   * Build user sync method info
-   * @param bidderRequest {BidderRequest}
-   * @returns {int|null} userSync method
-   */
   getAllowedUserSyncMethod: function (bidderRequest) {
     const {bidderCode} = bidderRequest;
     return userSyncUtils.getAllowedSyncMethod(bidderCode);
   },
 
-  /**
-   * Group given array of bidRequests by params.publisher
-   *
-   * @param {BidRequest[]} bidRequests
-   * @returns {Map.<Object, BidRequest[]>}
-   */
   groupBidRequestsByAdUnit: function (bidRequests) {
     const groupedBidRequests = new Map();
 
@@ -237,7 +207,7 @@ export const spec = {
    * Determines whether or not the given bid request is valid.
    *
    * @param {BidRequest} bid The bid params to validate.
-   * @return boolean True if this is a valid bid, and false otherwise.
+   * @return {boolean} True if this is a valid bid, and false otherwise.
    */
   isBidRequestValid: function (bid) {
     if (!utils.isPlainObject(bid.params) || !Object.keys(bid.params).length) {
@@ -261,8 +231,9 @@ export const spec = {
   /**
    * Make a server request from the list of BidRequests.
    *
-   * @param {validBidRequests[]} - an array of bids
-   * @return ServerRequest Info describing the request to the server.
+   * @param {BidRequest[]} validBidRequests an array of bids
+   * @param {BidderRequest} bidderRequest an array of bids
+   * @return {ServerRequest} Info describing the request to the server.
    */
   buildRequests: function (validBidRequests, bidderRequest) {
     const result = [];
@@ -290,6 +261,7 @@ export const spec = {
    * Unpack the response from the server into a list of bids.
    *
    * @param {ServerResponse} serverResponse A successful response from the server.
+   * @param {BidRequest} bidRequest Adverxo bidRequest
    * @return {Bid[]} An array of bids which were nested inside the server.
    */
   interpretResponse: function (serverResponse, bidRequest) {
