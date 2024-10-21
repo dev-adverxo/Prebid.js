@@ -21,7 +21,11 @@ const PBS_SYNC_TYPES = {
   2: 'image'
 };
 
-const NATIVE_MTYPE = 4;
+const ORTB_MTYPES = {
+  1: BANNER,
+  2: VIDEO,
+  4: NATIVE
+};
 
 const ortbConverter = OrtbConverter({
   context: {
@@ -39,7 +43,7 @@ const ortbConverter = OrtbConverter({
     return request;
   },
   bidResponse: function (buildBidResponse, bid, context) {
-    if (FEATURES.NATIVE && bid.mtype === NATIVE_MTYPE) {
+    if (FEATURES.NATIVE && ORTB_MTYPES[bid.mtype] === NATIVE) {
       if (typeof bid?.adm === 'string') {
         bid.adm = JSON.parse(bid.adm);
       }
@@ -298,7 +302,7 @@ export const spec = {
       const thisRequest = utils.getBidRequest(bid.requestId, [bidRequest]);
       const context = utils.deepAccess(thisRequest, 'mediaTypes.video.context');
 
-      if (bid.mediaType === 'video' && context === 'outstream') {
+      if (FEATURES.VIDEO && bid.mediaType === 'video' && context === 'outstream') {
         bid.renderer = videoUtils.createOutstreamVideoRenderer(bid);
       }
 

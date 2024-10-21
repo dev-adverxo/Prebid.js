@@ -1,12 +1,11 @@
 import {expect} from 'chai';
 import {spec} from 'modules/adverxoBidAdapter.js';
-import {BANNER, NATIVE, VIDEO} from '../../../src/mediaTypes.js';
 import {config} from 'src/config';
 
 describe('Adverxo Bid Adapter', () => {
-  const validBidRequests = [
+  const bannerBidRequests = [
     {
-      bidId: '2e9f38ea93bb9e',
+      bidId: 'bid-banner',
       bidder: 'adverxo',
       adUnitCode: 'adunit-code',
       mediaTypes: {banner: {sizes: [[300, 250]]}},
@@ -18,10 +17,10 @@ describe('Adverxo Bid Adapter', () => {
     },
   ];
 
-  const bidderRequest = {
+  const bannerBidderRequest = {
     bidderCode: 'adverxo',
     bidderRequestId: 'test-bidder-request-id',
-    bids: validBidRequests,
+    bids: bannerBidRequests,
     auctionId: 'new-auction-id'
   };
 
@@ -30,36 +29,26 @@ describe('Adverxo Bid Adapter', () => {
       {
         id: 1,
         required: 1,
-        img: {
-          type: 3,
-          w: 150,
-          h: 50,
-        }
+        img: {type: 3, w: 150, h: 50,}
       },
       {
         id: 2,
         required: 1,
-        title: {
-          len: 80
-        }
+        title: {len: 80}
       },
       {
         id: 3,
         required: 0,
-        data: {
-          type: 1
-        }
+        data: {type: 1}
       }
     ]
   };
 
   const nativeBidRequests = [
     {
-      placementCode: '/DfpAccount1/slot3',
-      bidId: 'bid12345',
+      bidId: 'bid-native',
       mediaTypes: {
         native: {
-          sendTargetingKeys: false,
           ortb: nativeOrtbRequest
         }
       },
@@ -72,11 +61,42 @@ describe('Adverxo Bid Adapter', () => {
   ];
 
   const nativeBidderRequest = {
-    refererInfo: {
-      page: 'https://publisher.com/home',
-      ref: 'https://referrer'
-    }
+    bidderCode: 'adverxo',
+    bidderRequestId: 'test-bidder-request-id',
+    bids: nativeBidRequests,
+    auctionId: 'new-auction-id'
   };
+
+  const videoBidRequests = [
+    {
+      bidId: 'bid-video',
+      mediaTypes: {
+        video: {
+          playerSize: [400, 300],
+          w: 400,
+          h: 300,
+          minduration: 5,
+          maxduration: 10,
+          startdelay: 0,
+          skip: 1,
+          minbitrate: 200,
+          protocols: [1, 2, 4]
+        }
+      },
+      params: {
+        adUnitId: 1,
+        auth: "authExample"
+      }
+    }
+  ];
+
+  const videoBidderRequest = {
+    bidderCode: 'adverxo',
+    bidderRequestId: 'test-bidder-request-id',
+    bids: videoBidRequests,
+    auctionId: 'new-auction-id'
+  };
+
 
   afterEach(function () {
     config.resetConfig();
@@ -125,7 +145,7 @@ describe('Adverxo Bid Adapter', () => {
 
   describe('buildRequests', () => {
     it('should build post request for banner', () => {
-      const request = spec.buildRequests(validBidRequests, bidderRequest)[0];
+      const request = spec.buildRequests(bannerBidRequests, bannerBidderRequest)[0];
 
       expect(request.method).to.equal('POST');
       expect(request.url).to.equal("http://localhost:7080/auction?id=1&auth=authExample");
@@ -163,6 +183,33 @@ describe('Adverxo Bid Adapter', () => {
         });
       });
     }
+
+    if (FEATURES.VIDEO) {
+      it('should build post request for video', function () {
+        const request = spec.buildRequests(videoBidRequests, videoBidderRequest)[0];
+
+        expect(request.method).to.equal('POST');
+        expect(request.url).to.equal("http://localhost:7080/auction?id=1&auth=authExample");
+
+        const ortbRequest = request.data;
+
+        expect(ortbRequest.imp).to.have.lengthOf(1);
+
+        expect(ortbRequest.imp[0]).to.deep.equal({
+          id: 'bid-video',
+          video: {
+            w: 400,
+            h: 300,
+            minduration: 5,
+            maxduration: 10,
+            startdelay: 0,
+            skip: 1,
+            minbitrate: 200,
+            protocols: [1, 2, 4]
+          }
+        });
+      });
+    }
   });
 
   describe('user sync supported method', function () {
@@ -179,7 +226,7 @@ describe('Adverxo Bid Adapter', () => {
         }
       });
 
-      const bidRequests = spec.buildRequests(validBidRequests, bidderRequest);
+      const bidRequests = spec.buildRequests(bannerBidRequests, bannerBidderRequest);
       expect(bidRequests).to.have.length(1);
       expect(bidRequests[0].data.ext.avx_usersync).to.be.null;
     });
@@ -197,7 +244,7 @@ describe('Adverxo Bid Adapter', () => {
         }
       });
 
-      const bidRequests = spec.buildRequests(validBidRequests, bidderRequest);
+      const bidRequests = spec.buildRequests(bannerBidRequests, bannerBidderRequest);
       expect(bidRequests).to.have.length(1);
       expect(bidRequests[0].data.ext.avx_usersync).to.be.equal(1);
     });
@@ -219,7 +266,7 @@ describe('Adverxo Bid Adapter', () => {
         }
       });
 
-      const bidRequests = spec.buildRequests(validBidRequests, bidderRequest);
+      const bidRequests = spec.buildRequests(bannerBidRequests, bannerBidderRequest);
       expect(bidRequests).to.have.length(1);
       expect(bidRequests[0].data.ext.avx_usersync).to.be.equal(2);
     });
@@ -241,7 +288,7 @@ describe('Adverxo Bid Adapter', () => {
         }
       });
 
-      const bidRequests = spec.buildRequests(validBidRequests, bidderRequest);
+      const bidRequests = spec.buildRequests(bannerBidRequests, bannerBidderRequest);
       expect(bidRequests).to.have.length(1);
       expect(bidRequests[0].data.ext.avx_usersync).to.be.equal(2);
     });
@@ -263,7 +310,7 @@ describe('Adverxo Bid Adapter', () => {
         }
       });
 
-      const bidRequests = spec.buildRequests(validBidRequests, bidderRequest);
+      const bidRequests = spec.buildRequests(bannerBidRequests, bannerBidderRequest);
       expect(bidRequests).to.have.length(1);
       expect(bidRequests[0].data.ext.avx_usersync).to.be.null;
     });
@@ -271,7 +318,7 @@ describe('Adverxo Bid Adapter', () => {
 
   describe('build user consent data', () => {
     it('shouldn\'t contain gdpr nor ccpa information for default request', function () {
-      const requestData = spec.buildRequests(validBidRequests, bidderRequest)[0].data;
+      const requestData = spec.buildRequests(bannerBidRequests, bannerBidderRequest)[0].data;
 
       expect(requestData.regs.coppa).to.be.equal(0);
       expect(requestData.regs.ext).to.be.deep.equal({});
@@ -279,13 +326,13 @@ describe('Adverxo Bid Adapter', () => {
 
     it('should contain gdpr-related information if consent is configured', function () {
       const bidderRequestWithConsent = {
-        ...bidderRequest,
+        ...bannerBidderRequest,
         gdprConsent: {gdprApplies: true, consentString: 'test-consent-string', vendorData: {}},
         uspConsent: '1YNN',
         gppConsent: {gppString: 'DBACNYA~CPXxRfAPXxRfAAfKABENB-CgAAAAAAAAAAYgAAAAAAAA~1YNN', applicableSections: [2]}
       };
 
-      const requestData = spec.buildRequests(validBidRequests, bidderRequestWithConsent)[0].data;
+      const requestData = spec.buildRequests(bannerBidRequests, bidderRequestWithConsent)[0].data;
 
       expect(requestData.regs.ext).to.be.eql({
         gdpr: 1,
@@ -299,7 +346,7 @@ describe('Adverxo Bid Adapter', () => {
     it('should contain coppa if configured', function () {
       config.setConfig({coppa: true});
 
-      const requestData = spec.buildRequests(validBidRequests, bidderRequest)[0].data;
+      const requestData = spec.buildRequests(bannerBidRequests, bannerBidderRequest)[0].data;
 
       expect(requestData.regs.coppa).to.be.equal(1);
     });
@@ -307,13 +354,13 @@ describe('Adverxo Bid Adapter', () => {
 
   describe('interpretResponse', () => {
     it('should return empty array if serverResponse is not defined', () => {
-      const bidRequest = spec.buildRequests(validBidRequests, bidderRequest);
+      const bidRequest = spec.buildRequests(bannerBidRequests, bannerBidderRequest);
       const bids = spec.interpretResponse(undefined, bidRequest);
 
       expect(bids.length).to.equal(0);
     });
 
-    it('should return bids array when serverResponse is defined and seatbid array is not empty', () => {
+    it('should interpret banner response', () => {
       const bidResponse = {
         body: {
           id: 'bid-response',
@@ -322,7 +369,7 @@ describe('Adverxo Bid Adapter', () => {
             {
               bid: [
                 {
-                  impid: '2e9f38ea93bb9e',
+                  impid: 'bid-banner',
                   crid: 'creative-id',
                   cur: 'USD',
                   price: 2,
@@ -350,71 +397,79 @@ describe('Adverxo Bid Adapter', () => {
             advertiserDomains: ['test.com'],
           },
           netRevenue: true,
-          requestId: '2e9f38ea93bb9e',
+          requestId: 'bid-banner',
           ttl: 60,
           width: 300,
         },
       ];
 
-      const request = spec.buildRequests(validBidRequests, bidderRequest)[0];
+      const request = spec.buildRequests(bannerBidRequests, bannerBidderRequest)[0];
       const bids = spec.interpretResponse(bidResponse, request);
 
       expect(bids).to.deep.equal(expectedBids);
     });
 
-    /*
-    it('should parse native string adm', () => {
-      const bidResponse = {
-        body: {
-          id: 'bid-response',
-          cur: 'USD',
-          seatbid: [
-            {
-              bid: [
-                {
-                  impid: '2e9f38ea93bb99',
-                  crid: 'creative-id',
-                  cur: 'USD',
-                  price: 2,
-                  w: 300,
-                  h: 250,
-                  mtype: 4,
-                  adomain: ['test.com'],
-                  adm: '{"native":{"assets":[{"id":0,"title":{"text":"Title"}},{"id":1,"data":{"value":"Description"}},{"id":2,"img":{"url":"http://example.com?img","w":300,"h":200}},{"id":3,"data":{"value":"Sponsor.com"}}],"link":{"url":"http://example.com?link"}}}'
-                },
-              ],
-              seat: 'test-seat',
-            },
-          ],
-        },
-      };
-
-      const expectedBids = [
-        {
-          cpm: 2,
-          creativeId: 'creative-id',
-          creative_id: 'creative-id',
-          currency: 'USD',
-          height: 250,
-          mediaType: 'native',
-          meta: {
-            advertiserDomains: ['test.com'],
+    if (FEATURES.NATIVE) {
+      it('should interpret native response', () => {
+        const bidResponse = {
+          body: {
+            id: 'native-response',
+            cur: 'USD',
+            seatbid: [
+              {
+                bid: [
+                  {
+                    impid: 'bid-native',
+                    crid: 'creative-id',
+                    cur: 'USD',
+                    price: 2,
+                    w: 300,
+                    h: 250,
+                    mtype: 4,
+                    adomain: ['test.com'],
+                    adm: '{"native":{"assets":[{"id":2,"title":{"text":"Title"}},{"id":3,"data":{"value":"Description"}},{"id":1,"img":{"url":"http://example.com?img","w":150,"h":50}}],"link":{"url":"http://example.com?link"}}}'
+                  },
+                ],
+                seat: 'test-seat',
+              },
+            ],
           },
-          netRevenue: true,
-          requestId: '2e9f38ea93bb9e',
-          ttl: 60,
-          width: 300,
-          native: {}
-        },
-      ];
+        };
 
-      const request = spec.buildRequests(nativeBidRequests, nativeBidderRequest)[0];
-      console.log("RolandoReq: ", request.data.imp[0])
-      const bids = spec.interpretResponse(bidResponse, request);
+        const expectedBids = [
+          {
+            cpm: 2,
+            creativeId: 'creative-id',
+            creative_id: 'creative-id',
+            currency: 'USD',
+            height: 250,
+            mediaType: 'native',
+            meta: {
+              advertiserDomains: ['test.com'],
+            },
+            netRevenue: true,
+            requestId: 'bid-native',
+            ttl: 60,
+            width: 300,
+            native: {
+              ortb: {
+                assets: [
+                  {id: 2, title: {text: "Title"}},
+                  {id: 3, data: {value: "Description"}},
+                  {id: 1, img: {url: "http://example.com?img", w: 150, h: 50}}
+                ],
+                link: {url: "http://example.com?link"}
+              }
+            }
+          }
+        ];
 
-      expect(bids).to.deep.equal(expectedBids);
-    });
-    */
+        const request = spec.buildRequests(nativeBidRequests, nativeBidderRequest)[0];
+        const bids = spec.interpretResponse(bidResponse, request);
+
+        expect(bids).to.deep.equal(expectedBids);
+      });
+    }
   });
 
   /*
@@ -483,7 +538,7 @@ function makeBidRequestWithParams(params) {
     bidId: '2e9f38ea93bb9e',
     bidder: 'adverxo',
     adUnitCode: 'adunit-code',
-    mediaTypes: {[BANNER]: {sizes: [[300, 250]]}},
+    mediaTypes: {banner: {sizes: [[300, 250]]}},
     params: params,
     bidderRequestId: 'test-bidder-request-id'
   };
