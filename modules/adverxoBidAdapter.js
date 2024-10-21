@@ -20,7 +20,8 @@ const GVLID = 0; // TODO, NoCommit, 9/10/24: Ponerlo
 
 const ENDPOINT_URL_AD_UNIT_PLACEHOLDER = '{AD_UNIT}';
 const ENDPOINT_URL_AUTH_PLACEHOLDER = '{AUTH}';
-const ENDPOINT_URL = `http://localhost:7080/auction?id=${ENDPOINT_URL_AD_UNIT_PLACEHOLDER}&auth=${ENDPOINT_URL_AUTH_PLACEHOLDER}`; // TODO, NoCommit, 9/10/24: Poner el dominio correcto
+const ENDPOINT_URL_HOST_PLACEHOLDER = '{HOST}';
+const ENDPOINT_URL = `https://${ENDPOINT_URL_HOST_PLACEHOLDER}/auction?id=${ENDPOINT_URL_AD_UNIT_PLACEHOLDER}&auth=${ENDPOINT_URL_AUTH_PLACEHOLDER}`;
 
 const AVX_SYNC_IFRAME = 1;
 const AVX_SYNC_IMAGE = 2;
@@ -150,8 +151,9 @@ const userSyncUtils = {
 };
 
 const adverxoUtils = {
-  buildAuctionUrl: function (adUnitId, adUnitAuth) {
+  buildAuctionUrl: function (host, adUnitId, adUnitAuth) {
     return ENDPOINT_URL
+      .replace(ENDPOINT_URL_HOST_PLACEHOLDER, host)
       .replace(ENDPOINT_URL_AD_UNIT_PLACEHOLDER, adUnitId)
       .replace(ENDPOINT_URL_AUTH_PLACEHOLDER, adUnitAuth);
   },
@@ -195,8 +197,9 @@ const adverxoUtils = {
 
     bidRequests.forEach(bidRequest => {
       const adUnit = {
+        host: bidRequest.params.host,
         id: bidRequest.params.adUnitId,
-        auth: bidRequest.params.auth
+        auth: bidRequest.params.auth,
       };
 
       if (!groupedBidRequests.get(adUnit)) {
@@ -254,6 +257,11 @@ export const spec = {
       return false;
     }
 
+    if (!bid.params.host || typeof bid.params.host !== 'string') {
+      utils.logWarn('Adverxo Bid Adapter: host bid param is required and must be a string');
+      return false;
+    }
+
     return true;
   },
 
@@ -277,7 +285,7 @@ export const spec = {
 
       result.push({
         method: 'POST',
-        url: adverxoUtils.buildAuctionUrl(adUnit.id, adUnit.auth),
+        url: adverxoUtils.buildAuctionUrl(adUnit.host, adUnit.id, adUnit.auth),
         data: ortbRequest,
         bids: adUnitBidRequests
       });

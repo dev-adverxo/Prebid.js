@@ -13,11 +13,11 @@ Banner, native and video formats are supported.
 
 # Bid Parameters
 
-| Name       | Required?                                  | Description                                                       | Example                                    | Type       |
-|------------|--------------------------------------------|-------------------------------------------------------------------|--------------------------------------------|------------|
-| `adUnitId` | Yes                                        | Unique identifier for the ad unit in Adverxo platform.            | `20355`                                    | `Integer`  |
-| `auth`     | Yes                                        | Authentication token provided by Adverxo platform for the AdUnit. | `'61336e75e414c77c367de5c47c2599ce80a8032b'` | `String`   |
-
+| Name       | Required? | Description                                                       | Example                                      | Type      |
+|------------|-----------|-------------------------------------------------------------------|----------------------------------------------|-----------|
+| `host`     | Yes       | Ad network host.                                                  | `prebidTest.adverxo.com`                             | `String` |
+| `adUnitId` | Yes       | Unique identifier for the ad unit in Adverxo platform.            | `41358`                                      | `Integer` |
+| `auth`     | Yes       | Authentication token provided by Adverxo platform for the AdUnit. | `'61336e75e414c77c367de5c47c2599ce80a8032b'` | `String`  |
 
 # Test Parameters
 
@@ -36,6 +36,7 @@ var adUnits = [
         bids: [{
             bidder: 'adverxo',
             params: {
+                host: 'prebidTest.adverxo.com',
                 adUnitId: 41358,
                 auth: '61336e75e414c77c367de5c47c2599ce80a8032b'
             }
@@ -69,6 +70,7 @@ var adUnits = [
         bids: [{
             bidder: 'adverxo',
             params: {
+                host: 'prebidTest.adverxo.com',
                 adUnitId: 41359,
                 auth: '9a640dfccc3381e71f0c29ffd4a72eabd29d9d86'
             }
@@ -88,6 +90,7 @@ var adUnits = [
         bids: [{
             bidder: 'adverxo',
             params: {
+                host: 'prebidTest.adverxo.com',
                 adUnitId: 41360,
                 auth: '1ac23d9621f21da28d9eab6f79bd5fbce4d037c1'
             }

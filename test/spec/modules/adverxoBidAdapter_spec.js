@@ -21,8 +21,9 @@ describe('Adverxo Bid Adapter', () => {
       adUnitCode: 'adunit-code',
       mediaTypes: {banner: {sizes: [[300, 250]]}},
       params: {
+        host: 'bid.example.com',
         adUnitId: 1,
-        auth: 'authExample'
+        auth: 'authExample',
       },
       bidderRequestId: 'test-bidder-request-id',
     },
@@ -65,6 +66,7 @@ describe('Adverxo Bid Adapter', () => {
       },
       nativeOrtbRequest,
       params: {
+        host: 'bid.example.com',
         adUnitId: 1,
         auth: 'authExample'
       }
@@ -96,6 +98,7 @@ describe('Adverxo Bid Adapter', () => {
         }
       },
       params: {
+        host: 'bid.example.com',
         adUnitId: 1,
         auth: 'authExample'
       }
@@ -127,6 +130,7 @@ describe('Adverxo Bid Adapter', () => {
         }
       },
       params: {
+        host: 'bid.example.com',
         adUnitId: 1,
         auth: 'authExample'
       }
@@ -148,7 +152,8 @@ describe('Adverxo Bid Adapter', () => {
     it('should validate bid request with valid params', () => {
       const validBid = makeBidRequestWithParams({
         adUnitId: 1,
-        auth: 'authExample'
+        auth: 'authExample',
+        host: 'www.bidExample.com'
       });
 
       const isValid = spec.isBidRequestValid(validBid);
@@ -166,7 +171,8 @@ describe('Adverxo Bid Adapter', () => {
 
     it('should not validate bid request with missing param(adUnitId)', () => {
       const invalidBid = makeBidRequestWithParams({
-        auth: 'authExample'
+        auth: 'authExample',
+        host: 'www.bidExample.com'
       });
 
       const isValid = spec.isBidRequestValid(invalidBid);
@@ -176,7 +182,19 @@ describe('Adverxo Bid Adapter', () => {
 
     it('should not validate bid request with missing param(auth)', () => {
       const invalidBid = makeBidRequestWithParams({
-        adUnitId: 1
+        adUnitId: 1,
+        host: 'www.bidExample.com'
+      });
+
+      const isValid = spec.isBidRequestValid(invalidBid);
+
+      expect(isValid).to.be.false;
+    });
+
+    it('should not validate bid request with missing param(host)', () => {
+      const invalidBid = makeBidRequestWithParams({
+        adUnitId: 1,
+        auth: 'authExample',
       });
 
       const isValid = spec.isBidRequestValid(invalidBid);
@@ -190,7 +208,7 @@ describe('Adverxo Bid Adapter', () => {
       const request = spec.buildRequests(bannerBidRequests, bannerBidderRequest)[0];
 
       expect(request.method).to.equal('POST');
-      expect(request.url).to.equal('http://localhost:7080/auction?id=1&auth=authExample');
+      expect(request.url).to.equal('https://bid.example.com/auction?id=1&auth=authExample');
       expect(request.data.device.ip).to.equal('caller');
       expect(request.data.ext.avx_add_vast_url).to.equal(1);
     });
@@ -200,7 +218,7 @@ describe('Adverxo Bid Adapter', () => {
         const request = spec.buildRequests(nativeBidRequests, nativeBidderRequest)[0];
 
         expect(request.method).to.equal('POST');
-        expect(request.url).to.equal('http://localhost:7080/auction?id=1&auth=authExample');
+        expect(request.url).to.equal('https://bid.example.com/auction?id=1&auth=authExample');
 
         const nativeRequest = JSON.parse(request.data.imp[0]['native'].request);
 
@@ -231,7 +249,7 @@ describe('Adverxo Bid Adapter', () => {
         const request = spec.buildRequests(videoInstreamBidRequests, videoInstreamBidderRequest)[0];
 
         expect(request.method).to.equal('POST');
-        expect(request.url).to.equal('http://localhost:7080/auction?id=1&auth=authExample');
+        expect(request.url).to.equal('https://bid.example.com/auction?id=1&auth=authExample');
 
         const ortbRequest = request.data;
 
