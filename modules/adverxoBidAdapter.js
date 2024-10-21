@@ -29,34 +29,33 @@ const ortbConverter = OrtbConverter({
     ttl: 60,
   },
   request: function request(buildRequest, imps, bidderRequest, context) {
-     const request = buildRequest(imps, bidderRequest, context);
+    const request = buildRequest(imps, bidderRequest, context);
 
-     utils.deepSetValue(request, 'device.ip', "caller");
-     utils.deepSetValue(request, 'regs', adverxoUtils.buildOrtbRegulations(bidderRequest));
-     utils.deepSetValue(request, 'ext.avx_usersync', adverxoUtils.getAllowedUserSyncMethod(bidderRequest));
-     utils.deepSetValue(request, 'ext.avx_add_vast_url', 1);
+    utils.deepSetValue(request, 'device.ip', "caller");
+    utils.deepSetValue(request, 'regs', adverxoUtils.buildOrtbRegulations(bidderRequest));
+    utils.deepSetValue(request, 'ext.avx_usersync', adverxoUtils.getAllowedUserSyncMethod(bidderRequest));
+    utils.deepSetValue(request, 'ext.avx_add_vast_url', 1);
 
-     return request;
+    return request;
   },
-  bidResponse: function(buildBidResponse, bid, context) {
-      if(bid.mtype === NATIVE_MTYPE){
-        if(typeof bid?.adm === 'string'){
-          bid.adm = bid.adm.replaceAll("${AUCTION_PRICE}", "");
-          bid.adm = JSON.parse(bid.adm);
-        }
-
-        if(bid?.adm?.native) {
-          bid.adm = bid.adm.native;
-        }
+  bidResponse: function (buildBidResponse, bid, context) {
+    if (FEATURES.NATIVE && bid.mtype === NATIVE_MTYPE) {
+      if (typeof bid?.adm === 'string') {
+        bid.adm = JSON.parse(bid.adm);
       }
 
-      const result = buildBidResponse(bid, context)
-
-      if(bid?.ext?.avx_vast_url) {
-        result.vastUrl = bid.ext.avx_vast_url;
+      if (bid?.adm?.native) {
+        bid.adm = bid.adm.native;
       }
+    }
 
-      return result;
+    const result = buildBidResponse(bid, context)
+
+    if (FEATURES.VIDEO && bid?.ext?.avx_vast_url) {
+      result.vastUrl = bid.ext.avx_vast_url;
+    }
+
+    return result;
   }
 });
 

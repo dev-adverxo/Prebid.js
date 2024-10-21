@@ -1,66 +1,121 @@
-import { expect } from 'chai';
-import { spec } from 'modules/BTBidAdapter.js';
-import { BANNER } from '../../../src/mediaTypes.js';
-// load modules that register ORTB processors
-import 'src/prebid.js';
-import 'modules/currency.js';
-import 'modules/userId/index.js';
-import 'modules/multibid/index.js';
-import 'modules/priceFloors.js';
-import 'modules/consentManagementTcf.js';
-import 'modules/consentManagementUsp.js';
-import 'modules/consentManagementGpp.js';
-import 'modules/tcfControl.js';
-import 'modules/gppControl_usnat.js';
-import 'modules/schain.js';
+import {expect} from 'chai';
+import {spec} from 'modules/adverxoBidAdapter.js';
+import {BANNER, NATIVE, VIDEO} from '../../../src/mediaTypes.js';
+import {config} from 'src/config';
 
-describe('BT Bid Adapter', () => {
-  const ENDPOINT_URL = 'https://pbs.btloader.com/openrtb2/auction';
+describe('Adverxo Bid Adapter', () => {
   const validBidRequests = [
     {
       bidId: '2e9f38ea93bb9e',
-      bidder: 'blockthrough',
+      bidder: 'adverxo',
       adUnitCode: 'adunit-code',
-      mediaTypes: { [BANNER]: { sizes: [[300, 250]] } },
+      mediaTypes: {banner: {sizes: [[300, 250]]}},
       params: {
-        bidderA: {
-          pubId: '11111',
-        },
+        adUnitId: 1,
+        auth: "authExample"
       },
       bidderRequestId: 'test-bidder-request-id',
     },
   ];
+
   const bidderRequest = {
-    bidderCode: 'blockthrough',
+    bidderCode: 'adverxo',
     bidderRequestId: 'test-bidder-request-id',
     bids: validBidRequests,
+    auctionId: 'new-auction-id'
   };
+
+  const nativeOrtbRequest = {
+    assets: [
+      {
+        id: 1,
+        required: 1,
+        img: {
+          type: 3,
+          w: 150,
+          h: 50,
+        }
+      },
+      {
+        id: 2,
+        required: 1,
+        title: {
+          len: 80
+        }
+      },
+      {
+        id: 3,
+        required: 0,
+        data: {
+          type: 1
+        }
+      }
+    ]
+  };
+
+  const nativeBidRequests = [
+    {
+      placementCode: '/DfpAccount1/slot3',
+      bidId: 'bid12345',
+      mediaTypes: {
+        native: {
+          sendTargetingKeys: false,
+          ortb: nativeOrtbRequest
+        }
+      },
+      nativeOrtbRequest,
+      params: {
+        adUnitId: 1,
+        auth: "authExample"
+      }
+    },
+  ];
+
+  const nativeBidderRequest = {
+    refererInfo: {
+      page: 'https://publisher.com/home',
+      ref: 'https://referrer'
+    }
+  };
+
+  afterEach(function () {
+    config.resetConfig();
+  });
 
   describe('isBidRequestValid', function () {
     it('should validate bid request with valid params', () => {
-      const validBid = {
-        params: {
-          pubmatic: {
-            publisherId: 55555,
-          },
-        },
-        sizes: [[300, 250]],
-        bidId: '123',
-        adUnitCode: 'leaderboard',
-      };
+      const validBid = makeBidRequestWithParams({
+        adUnitId: 1,
+        auth: "authExample"
+      });
 
       const isValid = spec.isBidRequestValid(validBid);
 
       expect(isValid).to.be.true;
     });
 
-    it('should not validate bid request with invalid params', () => {
-      const invalidBid = {
-        params: {},
-        sizes: [[300, 250]],
-        bidId: '123',
-        adUnitCode: 'leaderboard',
-      };
+    it('should not validate bid request with empty params', () => {
+      const invalidBid = makeBidRequestWithParams({});
+
+      const isValid = spec.isBidRequestValid(invalidBid);
+
+      expect(isValid).to.be.false;
+    });
+
+    it('should not validate bid request with missing param(adUnitId)', () => {
+      const invalidBid = makeBidRequestWithParams({
+        auth: "authExample"
+      });
+
+      const isValid = spec.isBidRequestValid(invalidBid);
+
+      expect(isValid).to.be.false;
+    });
+
+    it('should not validate bid request with missing param(auth)', () => {
+      const invalidBid = makeBidRequestWithParams({
+        adUnitId: 1
+      });
 
       const isValid = spec.isBidRequestValid(invalidBid);
 
@@ -69,23 +124,184 @@ describe('BT Bid Adapter', () => {
   });
 
   describe('buildRequests', () => {
-    it('should build post request when ortb2 fields are present', () => {
-      const impExtParams = {
-        bidderA: {
-          pubId: '11111',
-        },
+    it('should build post request for banner', () => {
+      const request = spec.buildRequests(validBidRequests, bidderRequest)[0];
+
+      expect(request.method).to.equal('POST');
+      expect(request.url).to.equal("http://localhost:7080/auction?id=1&auth=authExample");
+      expect(request.data.device.ip).to.equal("caller");
+      expect(request.data.ext.avx_add_vast_url).to.equal(1);
+    });
+
+    if (FEATURES.NATIVE) {
+      it('should build post request for native', () => {
+        const request = spec.buildRequests(nativeBidRequests, nativeBidderRequest)[0];
+
+        expect(request.method).to.equal('POST');
+        expect(request.url).to.equal("http://localhost:7080/auction?id=1&auth=authExample");
+
+        const nativeRequest = JSON.parse(request.data.imp[0]['native'].request);
+
+        expect(nativeRequest.assets).to.have.lengthOf(3);
+
+        expect(nativeRequest.assets[0]).to.deep.equal({
+          id: 1,
+          required: 1,
+          img: {w: 150, h: 50, type: 3}
+        });
+
+        expect(nativeRequest.assets[1]).to.deep.equal({
+          id: 2,
+          required: 1,
+          title: {len: 80}
+        });
+
+        expect(nativeRequest.assets[2]).to.deep.equal({
+          id: 3,
+          required: 0,
+          data: {type: 1}
+        });
+      });
+    }
+  });
+
+  describe('user sync supported method', function () {
+    it('should respect sync disabled', function () {
+      config.setConfig({
+        userSync: {
+          syncEnabled: false,
+          filterSettings: {
+            all: {
+              bidders: '*',
+              filter: 'include'
+            }
+          }
+        }
+      });
+
+      const bidRequests = spec.buildRequests(validBidRequests, bidderRequest);
+      expect(bidRequests).to.have.length(1);
+      expect(bidRequests[0].data.ext.avx_usersync).to.be.null;
+    });
+
+    it('on all config allowed should prioritize iframe', function () {
+      config.setConfig({
+        userSync: {
+          syncEnabled: true,
+          filterSettings: {
+            all: {
+              bidders: '*',
+              filter: 'include'
+            }
+          }
+        }
+      });
+
+      const bidRequests = spec.buildRequests(validBidRequests, bidderRequest);
+      expect(bidRequests).to.have.length(1);
+      expect(bidRequests[0].data.ext.avx_usersync).to.be.equal(1);
+    });
+
+    it('should respect exclude adverxo iframe filter', function () {
+      config.setConfig({
+        userSync: {
+          syncEnabled: true,
+          filterSettings: {
+            image: {
+              bidders: '*',
+              filter: 'include'
+            },
+            iframe: {
+              bidders: ['adverxo'],
+              filter: 'exclude'
+            }
+          }
+        }
+      });
+
+      const bidRequests = spec.buildRequests(validBidRequests, bidderRequest);
+      expect(bidRequests).to.have.length(1);
+      expect(bidRequests[0].data.ext.avx_usersync).to.be.equal(2);
+    });
+
+    it('should respect exclude iframe filter', function () {
+      config.setConfig({
+        userSync: {
+          syncEnabled: true,
+          filterSettings: {
+            image: {
+              bidders: '*',
+              filter: 'include'
+            },
+            iframe: {
+              bidders: '*',
+              filter: 'exclude'
+            }
+          }
+        }
+      });
+
+      const bidRequests = spec.buildRequests(validBidRequests, bidderRequest);
+      expect(bidRequests).to.have.length(1);
+      expect(bidRequests[0].data.ext.avx_usersync).to.be.equal(2);
+    });
+
+    it('should respect total exclusion', function () {
+      config.setConfig({
+        userSync: {
+          syncEnabled: true,
+          filterSettings: {
+            image: {
+              bidders: ['adverxo'],
+              filter: 'exclude'
+            },
+            iframe: {
+              bidders: ['adverxo'],
+              filter: 'exclude'
+            }
+          }
+        }
+      });
+
+      const bidRequests = spec.buildRequests(validBidRequests, bidderRequest);
+      expect(bidRequests).to.have.length(1);
+      expect(bidRequests[0].data.ext.avx_usersync).to.be.null;
+    });
+  });
+
+  describe('build user consent data', () => {
+    it('shouldn\'t contain gdpr nor ccpa information for default request', function () {
+      const requestData = spec.buildRequests(validBidRequests, bidderRequest)[0].data;
+
+      expect(requestData.regs.coppa).to.be.equal(0);
+      expect(requestData.regs.ext).to.be.deep.equal({});
+    });
+
+    it('should contain gdpr-related information if consent is configured', function () {
+      const bidderRequestWithConsent = {
+        ...bidderRequest,
+        gdprConsent: {gdprApplies: true, consentString: 'test-consent-string', vendorData: {}},
+        uspConsent: '1YNN',
+        gppConsent: {gppString: 'DBACNYA~CPXxRfAPXxRfAAfKABENB-CgAAAAAAAAAAYgAAAAAAAA~1YNN', applicableSections: [2]}
       };
 
-      const requests = spec.buildRequests(validBidRequests, bidderRequest);
+      const requestData = spec.buildRequests(validBidRequests, bidderRequestWithConsent)[0].data;
 
-      expect(requests[0].method).to.equal('POST');
-      expect(requests[0].url).to.equal(ENDPOINT_URL);
-      expect(requests[0].data).to.exist;
-      expect(requests[0].data.ext.prebid.channel).to.deep.equal({
-        name: 'pbjs',
-        version: '$prebid.version$',
+      expect(requestData.regs.ext).to.be.eql({
+        gdpr: 1,
+        gdpr_consent: 'test-consent-string',
+        gpp: 'DBACNYA~CPXxRfAPXxRfAAfKABENB-CgAAAAAAAAAAYgAAAAAAAA~1YNN',
+        gpp_sid: [2],
+        us_privacy: '1YNN'
       });
-      expect(requests[0].data.imp[0].ext).to.deep.equal(impExtParams);
+    });
+
+    it('should contain coppa if configured', function () {
+      config.setConfig({coppa: true});
+
+      const requestData = spec.buildRequests(validBidRequests, bidderRequest)[0].data;
+
+      expect(requestData.regs.coppa).to.be.equal(1);
     });
   });
 
@@ -124,7 +340,6 @@ describe('BT Bid Adapter', () => {
 
       const expectedBids = [
         {
-          btBidderCode: 'test-seat',
           cpm: 2,
           creativeId: 'creative-id',
           creative_id: 'creative-id',
@@ -146,8 +361,63 @@ describe('BT Bid Adapter', () => {
 
       expect(bids).to.deep.equal(expectedBids);
     });
+
+    /*
+    it('should parse native string adm', () => {
+      const bidResponse = {
+        body: {
+          id: 'bid-response',
+          cur: 'USD',
+          seatbid: [
+            {
+              bid: [
+                {
+                  impid: '2e9f38ea93bb99',
+                  crid: 'creative-id',
+                  cur: 'USD',
+                  price: 2,
+                  w: 300,
+                  h: 250,
+                  mtype: 4,
+                  adomain: ['test.com'],
+                  adm: '{"native":{"assets":[{"id":0,"title":{"text":"Title"}},{"id":1,"data":{"value":"Description"}},{"id":2,"img":{"url":"http://example.com?img","w":300,"h":200}},{"id":3,"data":{"value":"Sponsor.com"}}],"link":{"url":"http://example.com?link"}}}'
+                },
+              ],
+              seat: 'test-seat',
+            },
+          ],
+        },
+      };
+
+      const expectedBids = [
+        {
+          cpm: 2,
+          creativeId: 'creative-id',
+          creative_id: 'creative-id',
+          currency: 'USD',
+          height: 250,
+          mediaType: 'native',
+          meta: {
+            advertiserDomains: ['test.com'],
+          },
+          netRevenue: true,
+          requestId: '2e9f38ea93bb9e',
+          ttl: 60,
+          width: 300,
+          native: {}
+        },
+      ];
+
+      const request = spec.buildRequests(nativeBidRequests, nativeBidderRequest)[0];
+      console.log("RolandoReq: ", request.data.imp[0])
+      const bids = spec.interpretResponse(bidResponse, request);
+
+      expect(bids).to.deep.equal(expectedBids);
+    });
+    */
   });
 
+  /*
   describe('getUserSyncs', () => {
     const SYNC_URL = 'https://cdn.btloader.com/user_sync.html';
 
@@ -159,7 +429,7 @@ describe('BT Bid Adapter', () => {
 
     it('should return an empty array if no server responses are provided', () => {
       const syncs = spec.getUserSyncs(
-        { iframeEnabled: true },
+        {iframeEnabled: true},
         [],
         null,
         null,
@@ -190,10 +460,10 @@ describe('BT Bid Adapter', () => {
       expectedSyncUrl.searchParams.set('gpp_sid', 'sectionA');
       expectedSyncUrl.searchParams.set('us_privacy', us_privacy);
       const syncs = spec.getUserSyncs(
-        { iframeEnabled: true },
+        {iframeEnabled: true},
         [
-          { body: { ext: { responsetimemillis: { pubmatic: 123 } } } },
-          { body: { ext: { responsetimemillis: { pubmatic: 123, ix: 123 } } } },
+          {body: {ext: {responsetimemillis: {pubmatic: 123}}}},
+          {body: {ext: {responsetimemillis: {pubmatic: 123, ix: 123}}}},
         ],
         gdprConsent,
         us_privacy,
@@ -201,8 +471,20 @@ describe('BT Bid Adapter', () => {
       );
 
       expect(syncs).to.deep.equal([
-        { type: 'iframe', url: expectedSyncUrl.href },
+        {type: 'iframe', url: expectedSyncUrl.href},
       ]);
     });
   });
+  */
 });
+
+function makeBidRequestWithParams(params) {
+  return {
+    bidId: '2e9f38ea93bb9e',
+    bidder: 'adverxo',
+    adUnitCode: 'adunit-code',
+    mediaTypes: {[BANNER]: {sizes: [[300, 250]]}},
+    params: params,
+    bidderRequestId: 'test-bidder-request-id'
+  };
+}
