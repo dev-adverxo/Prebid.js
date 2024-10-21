@@ -35,6 +35,8 @@ const ORTB_MTYPES = {
   4: NATIVE
 };
 
+const DEFAULT_CURRENCY = "USD";
+
 const ortbConverter = OrtbConverter({
   context: {
     netRevenue: true,
@@ -49,6 +51,17 @@ const ortbConverter = OrtbConverter({
     utils.deepSetValue(request, 'ext.avx_add_vast_url', 1);
 
     return request;
+  },
+  imp(buildImp, bidRequest, context) {
+    const imp = buildImp(bidRequest, context);
+    const floor = adverxoUtils.getBidFloor(bidRequest);
+
+    if (floor) {
+      imp.bidfloor = floor;
+      imp.bidfloorcur = DEFAULT_CURRENCY;
+    }
+
+    return imp;
   },
   bidResponse: function (buildBidResponse, bid, context) {
     if (FEATURES.NATIVE && ORTB_MTYPES[bid.mtype] === NATIVE) {
@@ -194,6 +207,22 @@ const adverxoUtils = {
     });
 
     return groupedBidRequests;
+  },
+
+  getBidFloor: function (bid) {
+    if (utils.isFn(bid.getFloor)) {
+      const floor = bid.getFloor({
+        currency: DEFAULT_CURRENCY,
+        mediaType: '*',
+        size: '*',
+      });
+
+      if (utils.isPlainObject(floor) && !isNaN(floor.floor) && floor.currency === DEFAULT_CURRENCY) {
+        return floor.floor;
+      }
+    }
+
+    return null;
   }
 };
 
@@ -204,7 +233,7 @@ export const spec = {
   aliases: [],
 
   /**
-   * Determines whether or not the given bid request is valid.
+   * Determines whether the given bid request is valid.
    *
    * @param {BidRequest} bid The bid params to validate.
    * @return {boolean} True if this is a valid bid, and false otherwise.

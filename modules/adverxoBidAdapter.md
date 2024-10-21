@@ -1,97 +1,98 @@
 # Overview
 
-**Module Name**: Adxcg Bidder Adapter
-**Module Type**: Bidder Adapter
-**Maintainer**: info@adxcg.com
+```
+Module Name: Yandex Bidder Adapter
+Module Type: Bidder Adapter
+Maintainer: prebid@yandex-team.com
+```
 
 # Description
 
-Module that connects to an Adxcg.com zone to fetch bids.
+Module that connects to Adverxo to fetch bids.
+Banner, native and video formats are supported.
+
+# Bid Parameters
+
+| Name       | Required?                                  | Description                                                       | Example                                    | Type       |
+|------------|--------------------------------------------|-------------------------------------------------------------------|--------------------------------------------|------------|
+| `adUnitId` | Yes                                        | Unique identifier for the ad unit in Adverxo platform.            | `20355`                                    | `Integer`  |
+| `auth`     | Yes                                        | Authentication token provided by Adverxo platform for the AdUnit. | `'61336e75e414c77c367de5c47c2599ce80a8032b'` | `String`   |
+
 
 # Test Parameters
 
-```
-
-
-
-        var adUnits = [{
-                    code: 'banner-ad-div',
-                    mediaTypes: {
-                        banner: {
-                            sizes: [
-                                [300, 250],
-                                [300, 600]
-                            ]
-                        }
-                    },
-                    bids: [{
-                        bidder: 'adxcg',
-                        params: {
-                            adzoneid: '1'
-                        }
-                    }]
-                }, {
-                    code: 'native-ad-div',
-                    mediaTypes: {
-                        native: {
-                             image: {
-                                sendId: false,
-                                required: false,
-                                sizes: [127, 83]
-                            },
-                            icon: {
-                                sizes: [80, 80],
-                                required: false,
-                                sendId: true,
-                            },
-                            title: {
-                                sendId: false,
-                                required: false,
-                                len: 75
-                            },
-                            body: {
-                                sendId: false,
-                                required: false,
-                                len: 200
-                            },
-                            cta: {
-                                sendId: false,
-                                required: false,
-                                len: 75
-                            },
-                            sponsoredBy: {
-                                sendId: false,
-                                required: false
-                            }
-                        }
-                    },
-                    bids: [{
-                            bidder: 'adxcg',
-                            params: {
-                                adzoneid: '2379'
-                            }                        
-                    }]
-            },
-            {
-                code: 'video-div',
-                mediaTypes: {
-                    video: {
-                            playerSize: [640, 480],
-                            context: 'instream',
-                            mimes: ['video/mp4'],
-                            protocols: [2, 3, 5, 6, 8],
-                            playback_method: ['auto_play_sound_off'],
-			                maxduration: 100,
-                            skip: 1
-                        }
-                },
-                bids: [{
-                    bidder: 'adxcg',
-                    params: {
-                        adzoneid: '20'                       
-                    }
-                }]
+```javascript
+var adUnits = [
+    {
+        code: 'banner-ad-div',
+        mediaTypes: {
+            banner: {
+                sizes: [
+                    [400, 300],
+                    [320, 50]
+                ]
             }
-        ];
+        },
+        bids: [{
+            bidder: 'adverxo',
+            params: {
+                adUnitId: 41358,
+                auth: '61336e75e414c77c367de5c47c2599ce80a8032b'
+            }
+        }]
+    },
+    {
+        code: 'native-ad-div',
+        mediaTypes: {
+            native: {
+                image: {
+                    required: true,
+                    sizes: [400, 300]
+                },
+                title: {
+                    required: true,
+                    len: 75
+                },
+                body: {
+                    required: false,
+                    len: 200
+                },
+                cta: {
+                    required: false,
+                    len: 75
+                },
+                sponsoredBy: {
+                    required: false
+                }
+            }
+        },
+        bids: [{
+            bidder: 'adverxo',
+            params: {
+                adUnitId: 41359,
+                auth: '9a640dfccc3381e71f0c29ffd4a72eabd29d9d86'
+            }
+        }]
+    },
+    {
+        code: 'video-div',
+        mediaTypes: {
+            video: {
+                playerSize: [640, 480],
+                context: 'outstream',
+                mimes: ['video/mp4'],
+                maxduration: 30,
+                skip: 1
+            }
+        },
+        bids: [{
+            bidder: 'adverxo',
+            params: {
+                adUnitId: 41360,
+                auth: '1ac23d9621f21da28d9eab6f79bd5fbce4d037c1'
+            }
+        }]
+    }
+];
 
 ```

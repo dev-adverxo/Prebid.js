@@ -252,6 +252,18 @@ describe('Adverxo Bid Adapter', () => {
         });
       });
     }
+
+    it('should add bid floor to request', function () {
+      const bannerBidRequestWithFloor = {
+        ...bannerBidRequests[0],
+        getFloor: () => ({currency: 'USD', floor: 3})
+      };
+
+      const request = spec.buildRequests([bannerBidRequestWithFloor], {})[0].data;
+
+      expect(request.imp[0].bidfloor).to.equal(3);
+      expect(request.imp[0].bidfloorcur).to.equal('USD');
+    });
   });
 
   describe('user sync supported method', function () {
