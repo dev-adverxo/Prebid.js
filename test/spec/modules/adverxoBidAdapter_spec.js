@@ -3,6 +3,17 @@ import {spec} from 'modules/adverxoBidAdapter.js';
 import {config} from 'src/config';
 
 describe('Adverxo Bid Adapter', () => {
+  function makeBidRequestWithParams(params) {
+    return {
+      bidId: '2e9f38ea93bb9e',
+      bidder: 'adverxo',
+      adUnitCode: 'adunit-code',
+      mediaTypes: {banner: {sizes: [[300, 250]]}},
+      params: params,
+      bidderRequestId: 'test-bidder-request-id'
+    };
+  }
+
   const bannerBidRequests = [
     {
       bidId: 'bid-banner',
@@ -618,80 +629,63 @@ describe('Adverxo Bid Adapter', () => {
 
         expect(bids[0].renderer.url).to.equal('videoRendererUrl');
 
-        delete(bids[0].renderer);
+        delete (bids[0].renderer);
         expect(bids).to.deep.equal(expectedBids);
       });
     }
   });
 
-  /*
+
   describe('getUserSyncs', () => {
-    const SYNC_URL = 'https://cdn.btloader.com/user_sync.html';
-
-    it('should return an empty array if no sync options are provided', () => {
-      const syncs = spec.getUserSyncs({}, [], null, null, null);
-
-      expect(syncs).to.deep.equal([]);
-    });
-
     it('should return an empty array if no server responses are provided', () => {
-      const syncs = spec.getUserSyncs(
-        {iframeEnabled: true},
-        [],
-        null,
-        null,
-        null
-      );
-
+      const syncs = spec.getUserSyncs({iframeEnabled: true}, []);
       expect(syncs).to.deep.equal([]);
     });
 
-    it('should pass consent parameters and bidder codes in sync URL if they are provided', () => {
-      const gdprConsent = {
-        gdprApplies: true,
-        consentString: 'GDPRConsentString123',
+    it('should return an iframe sync url when server provided it', () => {
+      const serverResponse = {
+        body: {
+          ext: {
+            avx_usersync: [
+              {
+                type: 1,
+                url: 'userSyncUrl'
+              }
+            ]
+          }
+        }
       };
-      const gppConsent = {
-        gppString: 'GPPString123',
-        applicableSections: ['sectionA'],
-      };
-      const us_privacy = '1YNY';
-      const expectedSyncUrl = new URL(SYNC_URL);
-      expectedSyncUrl.searchParams.set('bidders', 'pubmatic,ix');
-      expectedSyncUrl.searchParams.set('gdpr', 1);
-      expectedSyncUrl.searchParams.set(
-        'gdpr_consent',
-        gdprConsent.consentString
-      );
-      expectedSyncUrl.searchParams.set('gpp', gppConsent.gppString);
-      expectedSyncUrl.searchParams.set('gpp_sid', 'sectionA');
-      expectedSyncUrl.searchParams.set('us_privacy', us_privacy);
-      const syncs = spec.getUserSyncs(
-        {iframeEnabled: true},
-        [
-          {body: {ext: {responsetimemillis: {pubmatic: 123}}}},
-          {body: {ext: {responsetimemillis: {pubmatic: 123, ix: 123}}}},
-        ],
-        gdprConsent,
-        us_privacy,
-        gppConsent
-      );
 
-      expect(syncs).to.deep.equal([
-        {type: 'iframe', url: expectedSyncUrl.href},
-      ]);
+      const syncs = spec.getUserSyncs({iframeEnabled: true}, [serverResponse]);
+
+      expect(syncs).to.have.lengthOf(1);
+      expect(syncs[0]).to.deep.equal({
+        type: 'iframe',
+        url: 'userSyncUrl'
+      });
+    });
+
+    it('should return an image sync url when server provided it', () => {
+      const serverResponse = {
+        body: {
+          ext: {
+            avx_usersync: [
+              {
+                type: 2,
+                url: 'userSyncUrl'
+              }
+            ]
+          }
+        }
+      };
+
+      const syncs = spec.getUserSyncs({pixelEnabled: true}, [serverResponse]);
+
+      expect(syncs).to.have.lengthOf(1);
+      expect(syncs[0]).to.deep.equal({
+        type: 'image',
+        url: 'userSyncUrl'
+      });
     });
   });
-  */
 });
-
-function makeBidRequestWithParams(params) {
-  return {
-    bidId: '2e9f38ea93bb9e',
-    bidder: 'adverxo',
-    adUnitCode: 'adunit-code',
-    mediaTypes: {banner: {sizes: [[300, 250]]}},
-    params: params,
-    bidderRequestId: 'test-bidder-request-id'
-  };
-}
