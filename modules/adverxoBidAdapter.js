@@ -8,8 +8,6 @@ import {Renderer} from '../src/Renderer.js';
 const BIDDER_CODE = 'adverxo';
 const GVLID = 0; // TODO, NoCommit, 9/10/24: Ponerlo
 
-// TODO, NoCommit, 16/10/24: Podemos usar esto?
-const VIDEO_RENDERER_URL = 'https://acdn.adnxs.com/video/outstream/ANOutstreamVideo.js';
 const ENDPOINT_URL_AD_UNIT_PLACEHOLDER = '{AD_UNIT}';
 const ENDPOINT_URL_AUTH_PLACEHOLDER = '{AUTH}';
 const ENDPOINT_URL = `http://localhost:7080/auction?id=${ENDPOINT_URL_AD_UNIT_PLACEHOLDER}&auth=${ENDPOINT_URL_AUTH_PLACEHOLDER}`; // TODO, NoCommit, 9/10/24: Poner el dominio correcto
@@ -55,8 +53,14 @@ const ortbConverter = OrtbConverter({
 
     const result = buildBidResponse(bid, context)
 
-    if (FEATURES.VIDEO && bid?.ext?.avx_vast_url) {
-      result.vastUrl = bid.ext.avx_vast_url;
+    if (FEATURES.VIDEO) {
+      if (bid?.ext?.avx_vast_url) {
+        result.vastUrl = bid.ext.avx_vast_url;
+      }
+
+      if (bid?.ext?.avx_video_renderer_url) {
+        result.avxVideoRendererUrl = bid.ext.avx_video_renderer_url;
+      }
     }
 
     return result;
@@ -67,7 +71,7 @@ const videoUtils = {
   createOutstreamVideoRenderer: function (bid) {
     const renderer = Renderer.install({
       id: bid.bidId,
-      url: VIDEO_RENDERER_URL,
+      url: bid.avxVideoRendererUrl,
       loaded: false,
       adUnitCode: bid.adUnitCode
     })
@@ -85,7 +89,7 @@ const videoUtils = {
     bid.renderer.push(() => {
       const win = (doc) ? doc.defaultView : window;
 
-      win.ANOutstreamVideo.renderAd({
+      win.adxVideoRenderer.renderAd({
         targetId: bid.adUnitCode,
         adResponse: {content: bid.vastXml}
       });

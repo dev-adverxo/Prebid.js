@@ -67,11 +67,12 @@ describe('Adverxo Bid Adapter', () => {
     auctionId: 'new-auction-id'
   };
 
-  const videoBidRequests = [
+  const videoInstreamBidRequests = [
     {
       bidId: 'bid-video',
       mediaTypes: {
         video: {
+          context: 'instream',
           playerSize: [400, 300],
           w: 400,
           h: 300,
@@ -90,13 +91,43 @@ describe('Adverxo Bid Adapter', () => {
     }
   ];
 
-  const videoBidderRequest = {
+  const videoInstreamBidderRequest = {
     bidderCode: 'adverxo',
     bidderRequestId: 'test-bidder-request-id',
-    bids: videoBidRequests,
+    bids: videoInstreamBidRequests,
     auctionId: 'new-auction-id'
   };
 
+  const videoOutstreamBidRequests = [
+    {
+      bidId: 'bid-video',
+      mediaTypes: {
+        video: {
+          context: 'outstream',
+          playerSize: [400, 300],
+          w: 400,
+          h: 300,
+          minduration: 5,
+          maxduration: 10,
+          startdelay: 0,
+          skip: 1,
+          minbitrate: 200,
+          protocols: [1, 2, 4]
+        }
+      },
+      params: {
+        adUnitId: 1,
+        auth: "authExample"
+      }
+    }
+  ];
+
+  const videoOutstreamBidderRequest = {
+    bidderCode: 'adverxo',
+    bidderRequestId: 'test-bidder-request-id',
+    bids: videoOutstreamBidRequests,
+    auctionId: 'new-auction-id'
+  };
 
   afterEach(function () {
     config.resetConfig();
@@ -186,7 +217,7 @@ describe('Adverxo Bid Adapter', () => {
 
     if (FEATURES.VIDEO) {
       it('should build post request for video', function () {
-        const request = spec.buildRequests(videoBidRequests, videoBidderRequest)[0];
+        const request = spec.buildRequests(videoInstreamBidRequests, videoInstreamBidderRequest)[0];
 
         expect(request.method).to.equal('POST');
         expect(request.url).to.equal("http://localhost:7080/auction?id=1&auth=authExample");
@@ -467,6 +498,127 @@ describe('Adverxo Bid Adapter', () => {
         const request = spec.buildRequests(nativeBidRequests, nativeBidderRequest)[0];
         const bids = spec.interpretResponse(bidResponse, request);
 
+        expect(bids).to.deep.equal(expectedBids);
+      });
+    }
+
+    if (FEATURES.VIDEO) {
+      it('should interpret video instream response', () => {
+        const bidResponse = {
+          body: {
+            id: 'video-response',
+            cur: 'USD',
+            seatbid: [
+              {
+                bid: [
+                  {
+                    impid: 'bid-video',
+                    crid: 'creative-id',
+                    cur: 'USD',
+                    price: 2,
+                    w: 300,
+                    h: 250,
+                    mtype: 2,
+                    adomain: ['test.com'],
+                    adm: "vastXml",
+                    ext: {
+                      avx_vast_url: "vastUrl"
+                    }
+                  },
+                ],
+                seat: 'test-seat',
+              },
+            ],
+          },
+        };
+
+        const expectedBids = [
+          {
+            cpm: 2,
+            creativeId: 'creative-id',
+            creative_id: 'creative-id',
+            currency: 'USD',
+            height: 250,
+            mediaType: 'video',
+            meta: {
+              advertiserDomains: ['test.com'],
+            },
+            netRevenue: true,
+            playerHeight: 300,
+            playerWidth: 400,
+            requestId: 'bid-video',
+            ttl: 60,
+            vastUrl: 'vastUrl',
+            vastXml: 'vastXml',
+            width: 300
+          }
+        ];
+
+        const request = spec.buildRequests(videoInstreamBidRequests, videoInstreamBidderRequest)[0];
+        const bids = spec.interpretResponse(bidResponse, request);
+
+        expect(bids).to.deep.equal(expectedBids);
+      });
+
+      it('should interpret video outstream response', () => {
+        const bidResponse = {
+          body: {
+            id: 'video-response',
+            cur: 'USD',
+            seatbid: [
+              {
+                bid: [
+                  {
+                    impid: 'bid-video',
+                    crid: 'creative-id',
+                    cur: 'USD',
+                    price: 2,
+                    w: 300,
+                    h: 250,
+                    mtype: 2,
+                    adomain: ['test.com'],
+                    adm: 'vastXml',
+                    ext: {
+                      avx_vast_url: 'vastUrl',
+                      avx_video_renderer_url: 'videoRendererUrl',
+                    }
+                  },
+                ],
+                seat: 'test-seat',
+              },
+            ],
+          },
+        };
+
+        const expectedBids = [
+          {
+            avxVideoRendererUrl: "videoRendererUrl",
+            cpm: 2,
+            creativeId: 'creative-id',
+            creative_id: 'creative-id',
+            currency: 'USD',
+            height: 250,
+            mediaType: 'video',
+            meta: {
+              advertiserDomains: ['test.com'],
+            },
+            netRevenue: true,
+            playerHeight: 300,
+            playerWidth: 400,
+            requestId: 'bid-video',
+            ttl: 60,
+            vastUrl: 'vastUrl',
+            vastXml: 'vastXml',
+            width: 300
+          }
+        ];
+
+        const request = spec.buildRequests(videoOutstreamBidRequests, videoOutstreamBidderRequest)[0];
+        const bids = spec.interpretResponse(bidResponse, request);
+
+        expect(bids[0].renderer.url).to.equal('videoRendererUrl');
+
+        delete(bids[0].renderer);
         expect(bids).to.deep.equal(expectedBids);
       });
     }
