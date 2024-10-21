@@ -256,15 +256,11 @@ describe('Adkernel adapter', function () {
             native: {
               assets: [
                 {id: 0, title: {text: 'Title'}},
-                {id: 3, data: {value: 'Description'}},
-                {id: 4, data: {value: 'Additional description'}},
-                {id: 1, img: {url: 'http://rtb.com/thumbnail?i=pTuOlf5KHUo_0&imgt=icon', w: 50, h: 50}},
-                {id: 2, img: {url: 'http://rtb.com/thumbnail?i=pTuOlf5KHUo_0', w: 300, h: 200}},
-                {id: 5, data: {value: 'Sponsor.com'}},
-                {id: 14, data: {value: 'displayurl.com'}}
+                {id: 1, data: {value: 'Description'}},
+                {id: 2, img: {url: 'http://example.com?img', w: 300, h: 200}},
+                {id: 3, data: {value: 'Sponsor.com'}},
               ],
-              link: {url: 'http://rtb.com/click?i=pTuOlf5KHUo_0'},
-              imptrackers: ['http://rtb.com/win?i=pTuOlf5KHUo_0&f=imp']
+              link: {url: 'http://example.com?link'}
             }
           }),
           adomain: ['displayurl.com'],

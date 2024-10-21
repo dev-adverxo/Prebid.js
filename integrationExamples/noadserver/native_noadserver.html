@@ -25,9 +25,7 @@
                                     id: 2,
                                     required: 1,
                                     img: {
-                                        type: 3,
-                                        w: 989,
-                                        h: 742
+                                        type: 3
                                     }
                                 },
                                 {
@@ -42,25 +40,17 @@
                     }
                 },
                 bids: [{
-                    bidder: 'appnexus',
+                    bidder: 'adverxo',
                     params: {
-                        placementId: 13232354,
-                        allowSmallerSizes: true
+                        adUnitId: 18,
+                        auth: "fb71a1ec1d4c0b7e3f0a21703fece91d8b65be44"
                     }
 
                 }]
             }];
 
             pbjs.setConfig({
-                debug: true,
-                s2sConfig: {
-                    accountId: '1',
-                    enabled: true,
-                    bidders: ['appnexuspsp'],
-                    timeout: 1000,
-                    adapter: 'prebidServer',
-                    endpoint: 'https://ib.adnxs.com/openrtb2/prebid',
-                }
+                debug: true
             });
 
             pbjs.requestBids({

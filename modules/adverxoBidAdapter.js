@@ -35,7 +35,7 @@ const ORTB_MTYPES = {
   4: NATIVE
 };
 
-const DEFAULT_CURRENCY = "USD";
+const DEFAULT_CURRENCY = 'USD';
 
 const ortbConverter = OrtbConverter({
   context: {

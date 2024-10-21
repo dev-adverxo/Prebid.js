@@ -110,8 +110,8 @@ function createRequest(bidRequests, bidderRequest, mediaType) {
   }
 
   rtbData.device = {};
-  rtbData.device.ip = "caller";
-  rtbData.device.ua = "caller";
+  rtbData.device.ip = 'caller';
+  rtbData.device.ua = 'caller';
 
   return {
     method: 'POST',

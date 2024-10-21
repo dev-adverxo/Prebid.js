@@ -10,7 +10,7 @@
 <html>
 
 <head>
-    <script async src="../../build/dev/prebid.js"></script>
+    <script async src="../../../build/dev/prebid.js"></script>
     <script async src="https://www.googletagservices.com/tag/js/gpt.js"></script>
     <script>
         var FAILSAFE_TIMEOUT = 10*3300;
@@ -37,12 +37,13 @@
                 code: 'native-div',
                 mediaTypes: {
                     native: {
-                        rendererUrl: 'renderer.js',
+                        rendererUrl: 'nativeRenderer.js',
                         title: {
                             required: true,
                             len: 800
                         },
                         body:{
+                            required: false,
                         },
                         image: {
                             required: true
@@ -118,7 +119,14 @@
             pbjs.addAdUnits(adUnits);
 
             pbjs.requestBids({
-                bidsBackHandler: sendAdserverRequest,
+                bidsBackHandler: function (bidResponses) {
+                    sendAdserverRequest();
+                    Object.entries(bidResponses).forEach(([slot, {bids}]) => {
+                        if(slot == "native-div"){
+                            bids?.length && renderNative(slot, bids[0]);
+                        }
+                    });
+                },
                 timeout: PREBID_TIMEOUT
             });
         });
@@ -134,10 +142,22 @@
             });
         }
 
+        function renderNative(divId, bid) {
+            const slot = document.getElementById(divId);
+            const iframe = document.createElement('iframe');
+            Object.entries({
+                frameBorder: 0,
+                marginWidth: 0,
+                marginHeight: 0,
+                scrolling: 'no'
+            }).forEach(([prop, val]) => iframe.setAttribute(prop, val));
+            slot.appendChild(iframe);
+            iframe.onload = () => pbjs.renderAd(iframe.contentDocument, bid.adId);
+        }
+
         setTimeout(function () {
             sendAdserverRequest();
         }, FAILSAFE_TIMEOUT);
-
     </script>
 
     <script>

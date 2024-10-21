@@ -17,51 +17,15 @@
             var div_2_sizes = [ [300, 250] ];
             var video_1_size = [ 640, 480 ];
 
-            var adUnits = [
-                {
-                    code: 'div-1',
-                    mediaTypes: {
-                        banner: {
-                            sizes: div_1_sizes
-                        }
-                    },
-                    bids: [
-                        {
-                            bidder: 'rubicon',
-                            params: {
-                                accountId: 14062,
-                                siteId: 70608,
-                                zoneId: 498816
-                            }
-                        }
-                    ]
-                },
-                {
-                    code: 'div-2',
-                    mediaTypes: {
-                        banner: {
-                            sizes: div_2_sizes
-                        }
-                    },
-                    bids: [
-                        {
-                            bidder: 'rubicon',
-                            params: {
-                                accountId: 14062,
-                                siteId: 70608,
-                                zoneId: 498816
-                            }
-                        }
-                    ]
-                }
-            ];
-
             var videoAdUnit = {
                 code: 'video-1',
                 mediaTypes: {
-                    video: {
-                        context: 'instream',
-                        playerSize: [ 640, 480 ]
+                     video: {
+                      context: 'instream', // or 'outstream',
+                      placement: 1,
+                      startdelay: 0,
+                      mimes: ['video/mp4'],
+                      playerSize: [768, 432] // video player size
                     }
                 },
                 ortb2Imp: {
@@ -73,10 +37,10 @@
                 },
                 bids: [
                     {
-                        bidder: 'spotx',
+                        bidder: 'adverxo',
                         params: {
-                            channel_id: 85394,
-                            ad_unit: 'instream'
+                            adUnitId: 18,
+                            auth: "fb71a1ec1d4c0b7e3f0a21703fece91d8b65be44"
                         }
                     }
                 ]
@@ -107,28 +71,10 @@
                 if (pbjs.initAdserverSet) return;
                 pbjs.initAdserverSet = true;
 
-                googletag.cmd.push(function() {
-                    const adUnitCodes = adUnits.map(adUnit => adUnit.code);
-                    pbjs.setTargetingForGPTAsync(adUnitCodes);
-                    googletag.pubads().refresh();
-                });
-
                 var videoBids = bids[videoAdUnit.code];
                 if (videoBids) {
-// DEMO NOTES: your environment likely will use the commented section ////
                     var videoUrl = videoBids.bids[0].vastUrl;
-//                    var videoUrl = pbjs.adServers.dfp.buildVideoUrl({
-//                        adUnit: videoAdUnit,
-//                        params: {
-//                            iu: '/19968336/prebid_cache_video_adunit',
-//                            cust_params: {
-//                                section: 'blog',
-//                                anotherKey: 'anotherValue'
-//                            },
-//                            output: 'vast'
-//                        }
-//                    });
-//////////////////////////////////////////////////////////////////////////
+
                     var ret = pbjs.adServers.adloox.buildVideoUrl({
                         adUnit: videoAdUnit,
                         url: videoUrl
@@ -167,21 +113,26 @@
                         rubicon: {
                             singleRequest: true
                         },
+                        bidResponseFilter: {
+                            cat: {
+                                enforce: false,
+                                blockUnknown: false
+                            },
+                            attr: {
+                                enforce: false,
+                                blockUnknown: false
+                            },
+                            adv: {
+                                enforce: false,
+                                blockUnknown: false
+                            }
+                        }
                         // RTD module honors pageUrl for referrer detection and
                         // the analytics module uses this for the 'pageurl' macro
                         // N.B. set this to a non-example.com URL to see the video
                         //pageUrl: 'https://yourdomain.com/some/path/to/content.html'
                     });
-                    pbjs.enableAnalytics({
-                        provider: 'adloox',
-                        options: {
-                            client: 'adlooxtest',
-                            clientid: 127,
-                            platformid: 0,
-                            tagid: 0
-                        }
-                    });
-                    pbjs.addAdUnits(adUnits);
+
                     pbjs.addAdUnits(videoAdUnit);
                     pbjs.requestBids({
                         bidsBackHandler: sendAdserverRequest,
@@ -224,8 +175,8 @@
             invokeVideoPlayer = function(url) {
                 playerInstance.setup({
                     "playlist": "https://content.jwplatform.com/feeds/ae4tmw2D.json",
-                    "width": 640,
-                    "height": 480,
+                    "width": 768,
+                    "height": 432,
                     "advertising": {
                         "client": "vast",
                         "tag": url

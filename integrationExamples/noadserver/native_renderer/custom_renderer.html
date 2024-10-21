@@ -8,36 +8,24 @@
         pbjs.que = pbjs.que || [];
 
         pbjs.que.push(function () {
-            const adUnits = [{
-                code: 'native-div',
-                mediaTypes: {
-                    native: {
-                        rendererUrl: 'renderer.js',
-                        title: {
-                            required: true,
-                            len: 800
-                        },
-                        image: {
-                            required: true,
-                            sizes: [989, 742],
-                        },
-                        sponsoredBy: {
-                            required: true
-                        }
-                    }
-                },
-                bids: [{
-                    bidder: 'appnexus',
-                    params: {
-                        placementId: 13232354,
-                        allowSmallerSizes: true
-                    }
-
-                }]
-            }];
+            const adUnits = [];
 
             pbjs.setConfig({
                 debug: true,
+                bidResponseFilter: {
+                    cat: {
+                        enforce: false,
+                        blockUnknown: false
+                    },
+                    attr: {
+                        enforce: false,
+                        blockUnknown: false
+                    },
+                    adv: {
+                        enforce: false,
+                        blockUnknown: false
+                    }
+                },
                 s2sConfig: {
                     accountId: '1',
                     enabled: true,

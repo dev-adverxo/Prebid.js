@@ -1,0 +1,312 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Instream Video and Banner Ad Mixed Page</title>
+
+    <link rel="stylesheet" href="https://googleads.github.io/videojs-ima/examples/style.css">
+    <link rel="stylesheet" href="https://googleads.github.io/videojs-ima/node_modules/video.js/dist/video-js.min.css">
+    <link rel="stylesheet"
+          href="https://googleads.github.io/videojs-ima/node_modules/videojs-contrib-ads/dist/videojs.ads.css"/>
+    <link rel="stylesheet" href="https://googleads.github.io/videojs-ima/dist/videojs.ima.css"/>
+
+
+    <!-- required scripts -->
+    <script async src="../../build/dev/prebid.js"></script>
+    <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+</head>
+<body>
+
+<!-- javascript -->
+<script>
+
+var div_1_sizes = [
+    [300, 250],
+    [300, 600]
+];
+var div_2_sizes = [
+    [728, 90],
+    [970, 250]
+];
+var PREBID_TIMEOUT = 5000;
+var FAILSAFE_TIMEOUT = 13000;
+
+var adUnits = [
+    {
+        code: '/19968336/header-bid-tag-0',
+        mediaTypes: {
+            banner: {
+                sizes: div_1_sizes
+            }
+        },
+        bids: [{
+            bidder: 'adverxo',
+            params: {
+                adUnitId: 18,
+                auth: "fb71a1ec1d4c0b7e3f0a21703fece91d8b65be44"
+            }
+        }]
+    },
+    {
+        code: '/19968336/header-bid-tag-1',
+        mediaTypes: {
+            banner: {
+                sizes: div_2_sizes
+            }
+        },
+        bids: [{
+            bidder: 'appnexus',
+            params: {
+                placementId: 13144370
+            }
+        }]
+    }
+];
+
+var videoAdUnit = {
+    code: 'video1',
+    mediaTypes: {
+        video: {
+          context: 'instream', // or 'outstream',
+          placement: 1,
+          startdelay: 0,
+          mimes: ['video/mp4'],
+          playerSize: [768, 432] // video player size
+        }
+    },
+    bids: [{
+        bidder: 'adverxo',
+        params: {
+            adUnitId: 18,
+            auth: "fb71a1ec1d4c0b7e3f0a21703fece91d8b65be44"
+        }
+    }]
+};
+
+var googletag = googletag || {};
+googletag.cmd = googletag.cmd || [];
+googletag.cmd.push(function() {
+    googletag.pubads().disableInitialLoad();
+});
+
+// Init Prebid.js
+var pbjs = pbjs || {};
+pbjs.que = pbjs.que || [];
+
+// define invokeVideoPlayer in advance in case we get the bids back from prebid before the entire page loads
+var tempTag = false;
+var invokeVideoPlayer = function(url) {
+    tempTag = url;
+};
+
+pbjs.que.push(function() {
+    pbjs.addAdUnits(adUnits);
+    pbjs.addAdUnits(videoAdUnit);
+    pbjs.setConfig({
+        debug: true,
+        bidResponseFilter: {
+            cat: {
+                enforce: false,
+                blockUnknown: false
+            },
+            attr: {
+                enforce: false,
+                blockUnknown: false
+            },
+            adv: {
+                enforce: false,
+                blockUnknown: false
+            }
+        },
+      cache: {
+            url: 'https://prebid.adnxs.com/pbc/v1/cache'
+        }
+    });
+    pbjs.requestBids({
+        bidsBackHandler: initAdserver,
+        timeout: PREBID_TIMEOUT,
+        auctionId: 'auction_1'
+    })
+});
+const that = this;
+function initAdserver(bids) {
+
+    if (pbjs.initAdserverSet) return;
+    pbjs.initAdserverSet = true;
+
+    // Get all of the adUnit codes for the display adUnits
+    var displayAdUnitCodes = [];
+    adUnits.forEach(function(adUnit) {
+        displayAdUnitCodes.push(adUnit.code);
+    });
+
+    // Set targeting for each display slot
+    googletag.cmd.push(function() {
+        pbjs.que.push(function() {
+            pbjs.setTargetingForGPTAsync(displayAdUnitCodes);
+            googletag.pubads().refresh();
+        });
+    });
+
+    const videoUrl = bids?.video1?.bids[0]?.vastUrl;
+
+    // Pass URL to Video player to make final DFP call
+    invokeVideoPlayer(videoUrl);
+}
+// in case PBJS doesn't load
+setTimeout(function() {
+    initAdserver();
+}, FAILSAFE_TIMEOUT);
+
+googletag.cmd.push(function() {
+    googletag.defineSlot('/19968336/header-bid-tag-0', div_1_sizes, 'div-1').addService(googletag.pubads());
+    googletag.pubads().enableSingleRequest();
+    googletag.enableServices();
+});
+
+googletag.cmd.push(function() {
+    googletag.defineSlot('/19968336/header-bid-tag-1', div_2_sizes, 'div-2').addService(googletag.pubads());
+    googletag.pubads().enableSingleRequest();
+    googletag.enableServices();
+});
+</script>
+
+<video id="content_video" class="video-js vjs-default-skin" controls preload="auto" width="640" height="360"
+       poster="your-poster.jpg" data-setup='{}'>
+    <source src="https://sample-videos.com/video321/mp4/240/big_buck_bunny_240p_10mb.mp4" type="video/mp4">
+</video>
+
+<!-- html -->
+<h2>Prebid Video - JW Platform</h2>
+<div id="myElement1"></div>
+<!-- This line loads a player without loading any video content -->
+<!-- Replace this with the correct url for your player -->
+<!--<script src="https://content.jwplatform.com/libraries/72xIKEe6.js"></script>-->
+
+<script>
+    var Player = function(id, vastUrl) {
+      this.id = id;
+      this.init = function() {
+        this.player = videojs(this.id);
+
+        var options = {
+          id: id,
+          adTagUrl: "https://ilcitip.com/vast1.xml?a=cxvxcv"
+        };
+
+        this.player.ima(options);
+
+        // Remove controls from the player on iPad to stop native controls from stealing
+        // our click
+        var contentPlayer =  document.getElementById(id + '_html5_api');
+        if ((navigator.userAgent.match(/iPad/i) ||
+              navigator.userAgent.match(/Android/i)) &&
+            contentPlayer.hasAttribute('controls')) {
+          contentPlayer.removeAttribute('controls');
+        }
+
+        // Initialize the ad container when the video player is clicked, but only the
+        // first time it's clicked.
+        this.startEvent = 'click';
+        if (navigator.userAgent.match(/iPhone/i) ||
+            navigator.userAgent.match(/iPad/i) ||
+            navigator.userAgent.match(/Android/i)) {
+          this.startEvent = 'touchend';
+        }
+
+        this.wrapperDiv = document.getElementById(this.id);
+        this.boundInitAdDisplayContainer = this.initAdDisplayContainer.bind(this);
+        this.wrapperDiv.addEventListener(
+            this.startEvent, this.boundInitAdDisplayContainer);
+      }
+
+      this.initAdDisplayContainer = function() {
+        this.player.ima.initializeAdDisplayContainer();
+        this.wrapperDiv.removeEventListener(
+            this.startEvent, this.boundInitAdDisplayContainer);
+      }
+    }
+
+    function loadScript(src) {
+
+
+        var script = document.createElement('script');
+        script.onload = function () {
+        };
+        script.src = src;
+
+        document.head.appendChild(script); //or something of the likes
+
+    }
+
+    function invokeVideoPlayer(url) {
+        loadScript("https://imasdk.googleapis.com/js/sdkloader/ima3.js");
+        loadScript("https://googleads.github.io/videojs-ima/node_modules/video.js/dist/video.min.js");
+        loadScript("https://googleads.github.io/videojs-ima/node_modules/videojs-contrib-ads/dist/videojs.ads.min.js");
+        loadScript("https://googleads.github.io/videojs-ima/dist/videojs.ima.js");
+
+        setTimeout(()=>{
+            var pp = new Player('content_video');
+            pp.init();
+        }, 0)
+    }
+
+  /*
+
+  // we initialize our player instance, specifying the div to load it into
+  var playerInstance = jwplayer('myElement1');
+
+  function invokeVideoPlayer(url) {
+    console.log("videoPlayerUrl: " + url);
+    // this calls setup on the player we initialized
+    // this will use the settings defined in the player we loaded above unless you override them here
+    playerInstance.setup({
+        // this line loads a playlist from your jwplatform account (in either json or rss format)
+        // this can also be a single media file by specifying "file" : "content.jwplatform.com/videos/VIDEOKEY.mp4"
+        // Replace this with the correct url for your playlist
+        "playlist": "https://content.jwplatform.com/feeds/ae4tmw2D.json",
+        "width": 640,
+        "height": 480,
+        // we enable vast advertising for this player
+        "advertising": {
+            "client": "vast",
+            // url is the vast tag url that we passed in when we called invokeVideoPlayer in the header
+            "tag": url,
+        },
+    });
+  }
+
+  */
+
+  if (tempTag) {
+    //invokeVideoPlayer(tempTag);
+    //tempTag = false;
+  }
+</script>
+
+<!-- Basic Prebid Display Section - Body -->
+<!-- ################################### -->
+<h2>Basic Prebid.js Example</h2>
+<h5>Div-1</h5>
+
+<div id='div-1'>
+    <script type='text/javascript'>
+        googletag.cmd.push(function() {
+            googletag.display('div-1');
+        });
+    </script>
+</div>
+
+<h5>Div-2</h5>
+<div id='div-2'>
+    <script type='text/javascript'>
+        googletag.cmd.push(function() {
+            googletag.display('div-2');
+        });
+    </script>
+</div>
+
+
+</body>
+</html>
