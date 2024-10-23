@@ -21,6 +21,7 @@ const GVLID = 0; // TODO, NoCommit, 9/10/24: Ponerlo
 const ENDPOINT_URL_AD_UNIT_PLACEHOLDER = '{AD_UNIT}';
 const ENDPOINT_URL_AUTH_PLACEHOLDER = '{AUTH}';
 const ENDPOINT_URL_HOST_PLACEHOLDER = '{HOST}';
+// TODO, NoCommit, 22/10/24: http o https?
 const ENDPOINT_URL = `https://${ENDPOINT_URL_HOST_PLACEHOLDER}/auction?id=${ENDPOINT_URL_AD_UNIT_PLACEHOLDER}&auth=${ENDPOINT_URL_AUTH_PLACEHOLDER}`;
 
 const AVX_SYNC_IFRAME = 1;
@@ -65,6 +66,8 @@ const ortbConverter = OrtbConverter({
     return imp;
   },
   bidResponse: function (buildBidResponse, bid, context) {
+    bid.adm = bid.adm.replaceAll(`\${AUCTION_PRICE}`, bid.price)
+
     if (FEATURES.NATIVE && ORTB_MTYPES[bid.mtype] === NATIVE) {
       if (typeof bid?.adm === 'string') {
         bid.adm = JSON.parse(bid.adm);

@@ -449,6 +449,7 @@ describe('Adverxo Bid Adapter', () => {
                   h: 250,
                   mtype: 1,
                   adomain: ['test.com'],
+                  adm: '<div></div>'
                 },
               ],
               seat: 'test-seat',
@@ -472,6 +473,7 @@ describe('Adverxo Bid Adapter', () => {
           requestId: 'bid-banner',
           ttl: 60,
           width: 300,
+          ad: '<div></div>'
         },
       ];
 
@@ -479,6 +481,38 @@ describe('Adverxo Bid Adapter', () => {
       const bids = spec.interpretResponse(bidResponse, request);
 
       expect(bids).to.deep.equal(expectedBids);
+    });
+
+    it('should replace openrtb auction price macro', () => {
+      const bidResponse = {
+        body: {
+          id: 'bid-response',
+          cur: 'USD',
+          seatbid: [
+            {
+              bid: [
+                {
+                  impid: 'bid-banner',
+                  crid: 'creative-id',
+                  cur: 'USD',
+                  price: 2,
+                  w: 300,
+                  h: 250,
+                  mtype: 1,
+                  adomain: ['test.com'],
+                  adm: '<a href="https://www.example.com/imp?prc=${AUCTION_PRICE}" target="_blank"><img src="https://www.example.com/click?prc=${AUCTION_PRICE}"</a>'
+                },
+              ],
+              seat: 'test-seat',
+            },
+          ],
+        },
+      };
+
+      const request = spec.buildRequests(bannerBidRequests, bannerBidderRequest)[0];
+      const bids = spec.interpretResponse(bidResponse, request);
+
+      expect(bids[0].ad).to.equal('<a href="https://www.example.com/imp?prc=2" target="_blank"><img src="https://www.example.com/click?prc=2"</a>');
     });
 
     if (FEATURES.NATIVE) {
