@@ -1,9 +1,9 @@
 # Overview
 
 ```
-Module Name: Yandex Bidder Adapter
+Module Name: Adverxo Bidder Adapter
 Module Type: Bidder Adapter
-Maintainer: prebid@yandex-team.com
+Maintainer: prebid-dev@adverxo.com
 ```
 
 # Description
