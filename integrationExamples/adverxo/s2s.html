@@ -1,0 +1,246 @@
+<!--
+  This page calls a single bidder for a single ad slot. It can be considered a "hello world" example for using
+  Prebid with the Google Publisher Tag.
+  It also makes a good test page for new adapter PR submissions. Simply set your server's Bid Params object in the
+  bids array inside the adUnits, and it will use your adapter to load an ad.
+  NOTE that many ad servers won't send back an ad if the URL is localhost... so you might need to
+  set an alias in your /etc/hosts file so that you can load this page from a different domain.
+-->
+
+<html>
+
+<head>
+    <script async src="../../../build/dev/prebid.js"></script>
+    <script async src="https://www.googletagservices.com/tag/js/gpt.js"></script>
+    <script>
+        var FAILSAFE_TIMEOUT = 10 * 3300;
+        var PREBID_TIMEOUT = 10 * 1000;
+
+        var adUnits = [
+            {
+                code: 'div-gpt-ad-1460505748561-0',
+                mediaTypes: {
+                    banner: {
+                        sizes: [[300, 300], [300, 250]]
+                    }
+                },
+                // Replace this object to test a new Adapter!
+                bids: [{
+                    bidder: 'adverxo',
+                    params: {
+                        host: 'cpm.metaadserving.com',
+                        zoneId: 30164,
+                        adUnitId: 15,
+                        auth: "fb71a1ec1d4c0b7e3f0a21703fece91d8b65be44"
+                    }
+                }]
+            },
+            {
+                code: 'native-div',
+                mediaTypes: {
+                    native: {
+                        rendererUrl: 'nativeRenderer.js',
+                        title: {
+                            required: true,
+                            len: 800
+                        },
+                        body: {
+                            required: false,
+                        },
+                        image: {
+                            required: true
+                        },
+                        sponsoredBy: {
+                            required: false
+                        }
+                    }
+                },
+                bids: [{
+                    bidder: 'adverxo',
+                    params: {
+                        adUnitId: 14,
+                        auth: "fb71a1ec1d4c0b7e3f0a21703fece91d8b65be44"
+                    }
+                }]
+            },
+            {
+                code: 'div-gpt-ad-1460505748561-1',
+                mediaTypes: {
+                    video: {
+                        context: 'outstream', // or 'outstream',
+                        placement: 1,
+                        startdelay: 0,
+                        mimes: ['video/mp4'],
+                        playerSize: [768, 432] // video player size
+                    },
+                    banner: {
+                        sizes: [300, 300]
+                    }
+                },
+                // Replace this object to test a new Adapter!
+                bids: [{
+                    bidder: 'adverxo',
+                    params: {
+                        adUnitId: 18,
+                        auth: "fb71a1ec1d4c0b7e3f0a21703fece91d8b65be44"
+                    }
+                }],
+                renderer: {
+                    url: "https://acdn.adnxs.com/video/outstream/ANOutstreamVideo.js",
+                    render: (bid) => {
+                        let ad = bid.ad || bid.vastXml;
+
+                        const adResponse = {
+                            ad: {
+                                video: {
+                                    content: ad,
+                                    player_width: 640,
+                                    player_height: 480,
+                                }
+                            }
+                        }
+
+                        bid.renderer.push(() => {
+                            window.ANOutstreamVideo.renderAd({
+                                targetId: bid.adUnitCode,
+                                adResponse,
+                            });
+                        });
+                    }
+                }
+            }
+        ];
+
+        var pbjs = pbjs || {};
+        pbjs.que = pbjs.que || [];
+
+    </script>
+
+    <script>
+        var googletag = googletag || {};
+        googletag.cmd = googletag.cmd || [];
+        googletag.cmd.push(function () {
+            googletag.pubads().disableInitialLoad();
+        });
+
+        pbjs.que.push(function () {
+            pbjs.setConfig({
+                bidResponseFilter: {
+                    cat: {
+                        enforce: false,
+                        blockUnknown: false
+                    },
+                    attr: {
+                        enforce: false,
+                        blockUnknown: false
+                    },
+                    adv: {
+                        enforce: false,
+                        blockUnknown: false
+                    }
+                },
+                s2sConfig: {
+                    accountId: 'your_account_id',  // Replace with your account ID
+                    bidders: ['adverxo', 'adkernel'],  // Example bidders handled via S2S
+                    enabled: true,  // Enable S2S requests
+                    timeout: 1000,  // Timeout in milliseconds for S2S responses
+                    adapter: 'prebidServer',  // Prebid S2S adapter
+                    endpoint: {
+                        p1Consent: 'http://localhost:8000/openrtb2/auction',  // PBS auction endpoint
+                        noP1Consent: 'http://localhost:8000/openrtb2/auction',  // Same for non-consented users
+                    },
+                    syncEndpoint: 'http://localhost:8000/cookie_sync',  // Sync endpoint for cookies
+                    cacheEndpoint: 'http://localhost:8000/cache',  // Cache endpoint
+                    cookieSet: true,  // Whether to sync cookies for user tracking
+                    syncTimeout: 1000  // Timeout for cookie sync
+                }
+            });
+
+            pbjs.addAdUnits(adUnits);
+
+            pbjs.requestBids({
+                bidsBackHandler: function (bidResponses) {
+                    sendAdserverRequest();
+                    Object.entries(bidResponses).forEach(([slot, {bids}]) => {
+                        if (slot == "native-div") {
+                            bids?.length && renderNative(slot, bids[0]);
+                        }
+                    });
+                },
+                timeout: PREBID_TIMEOUT
+            });
+        });
+
+        function sendAdserverRequest() {
+            if (pbjs.adserverRequestSent) return;
+            pbjs.adserverRequestSent = true;
+            googletag.cmd.push(function () {
+                pbjs.que.push(function () {
+                    pbjs.setTargetingForGPTAsync();
+                    googletag.pubads().refresh();
+                });
+            });
+        }
+
+        function renderNative(divId, bid) {
+            const slot = document.getElementById(divId);
+            const iframe = document.createElement('iframe');
+            Object.entries({
+                frameBorder: 0,
+                marginWidth: 0,
+                marginHeight: 0,
+                scrolling: 'no'
+            }).forEach(([prop, val]) => iframe.setAttribute(prop, val));
+            slot.appendChild(iframe);
+            iframe.onload = () => pbjs.renderAd(iframe.contentDocument, bid.adId);
+        }
+
+        setTimeout(function () {
+            sendAdserverRequest();
+        }, FAILSAFE_TIMEOUT);
+    </script>
+
+    <script>
+        googletag.cmd.push(function () {
+            googletag.defineSlot('/19968336/header-bid-tag-0', [[300, 250], [300, 600], [473, 601]], 'div-gpt-ad-1460505748561-0').addService(googletag.pubads());
+            googletag.defineSlot('/19968336/header-bid-tag-1', [[300, 250], [300, 600], [473, 601]], 'div-gpt-ad-1460505748561-1').addService(googletag.pubads());
+
+            googletag.pubads().enableSingleRequest();
+            googletag.enableServices();
+        });
+    </script>
+</head>
+
+<body>
+<h1>Prebid.js Test</h1>
+
+<h2>Banner(GPT)</h2>
+<div id='div-gpt-ad-1460505748561-0'>
+    <script type='text/javascript'>
+        googletag.cmd.push(function () {
+            googletag.display('div-gpt-ad-1460505748561-0');
+        });
+    </script>
+</div>
+
+<hr/>
+
+<h2>Native (NoAdServer)</h2>
+<div id='native-div'>
+</div>
+
+<hr/>
+
+<h2>Video Outstream(GPT)</h2>
+<div id='div-gpt-ad-1460505748561-1'>
+    <script type='text/javascript'>
+        googletag.cmd.push(function () {
+            googletag.display('div-gpt-ad-1460505748561-1');
+        });
+    </script>
+</div>
+
+
+</body>
+
+</html>
