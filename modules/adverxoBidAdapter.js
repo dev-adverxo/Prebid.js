@@ -1,5 +1,4 @@
 import * as utils from '../src/utils.js';
-import {config} from '../src/config.js';
 import {registerBidder} from '../src/adapters/bidderFactory.js';
 import {BANNER, VIDEO, NATIVE} from '../src/mediaTypes.js';
 import {ortbConverter as OrtbConverter} from '../libraries/ortbConverter/converter.js';
@@ -11,25 +10,15 @@ import {Renderer} from '../src/Renderer.js';
  * @typedef {import('../src/adapters/bidderFactory.js').ServerRequest} ServerRequest
  * @typedef {import('../src/adapters/bidderFactory.js').ServerResponse} ServerResponse
  * @typedef {import('../src/auction.js').BidderRequest} BidderRequest
- * @typedef {import('../src/adapters/bidderFactory.js').SyncOptions} SyncOptions
- * @typedef {import('../src/adapters/bidderFactory.js').UserSync} UserSync
  */
 
 const BIDDER_CODE = 'adverxo';
-const GVLID = 0; // TODO, NoCommit, 9/10/24: Ponerlo
 
 const ENDPOINT_URL_AD_UNIT_PLACEHOLDER = '{AD_UNIT}';
 const ENDPOINT_URL_AUTH_PLACEHOLDER = '{AUTH}';
 const ENDPOINT_URL_HOST_PLACEHOLDER = '{HOST}';
-// TODO, NoCommit, 22/10/24: http o https?
-const ENDPOINT_URL = `https://${ENDPOINT_URL_HOST_PLACEHOLDER}/pickpbs?id=${ENDPOINT_URL_AD_UNIT_PLACEHOLDER}&auth=${ENDPOINT_URL_AUTH_PLACEHOLDER}`;
 
-const AVX_SYNC_IFRAME = 1;
-const AVX_SYNC_IMAGE = 2;
-const PBS_SYNC_TYPES = {
-  1: 'iframe',
-  2: 'image'
-};
+const ENDPOINT_URL = `https://${ENDPOINT_URL_HOST_PLACEHOLDER}/pickpbs?id=${ENDPOINT_URL_AD_UNIT_PLACEHOLDER}&auth=${ENDPOINT_URL_AUTH_PLACEHOLDER}`;
 
 const ORTB_MTYPES = {
   1: BANNER,
@@ -48,8 +37,6 @@ const ortbConverter = OrtbConverter({
     const request = buildRequest(imps, bidderRequest, context);
 
     utils.deepSetValue(request, 'device.ip', 'caller');
-    utils.deepSetValue(request, 'regs', adverxoUtils.buildOrtbRegulations(bidderRequest));
-    utils.deepSetValue(request, 'ext.avx_usersync', adverxoUtils.getAllowedUserSyncMethod(bidderRequest));
     utils.deepSetValue(request, 'ext.avx_add_vast_url', 1);
 
     return request;
@@ -124,75 +111,12 @@ const videoUtils = {
   }
 };
 
-const userSyncUtils = {
-  isSyncAllowed: function (syncRule, bidderCode) {
-    if (!syncRule) {
-      return false;
-    }
-
-    const bidders = utils.isArray(syncRule.bidders) ? syncRule.bidders : [bidderCode];
-    const rule = syncRule.filter === 'include';
-
-    return utils.contains(bidders, bidderCode) === rule;
-  },
-
-  getAllowedSyncMethod: function (bidderCode) {
-    if (!config.getConfig('userSync.syncEnabled')) {
-      return null;
-    }
-
-    const filterConfig = config.getConfig('userSync.filterSettings');
-
-    if (this.isSyncAllowed(filterConfig.all, bidderCode) || this.isSyncAllowed(filterConfig.iframe, bidderCode)) {
-      return AVX_SYNC_IFRAME;
-    } else if (this.isSyncAllowed(filterConfig.image, bidderCode)) {
-      return AVX_SYNC_IMAGE;
-    }
-
-    return null;
-  }
-};
-
 const adverxoUtils = {
   buildAuctionUrl: function (host, adUnitId, adUnitAuth) {
     return ENDPOINT_URL
       .replace(ENDPOINT_URL_HOST_PLACEHOLDER, host)
       .replace(ENDPOINT_URL_AD_UNIT_PLACEHOLDER, adUnitId)
       .replace(ENDPOINT_URL_AUTH_PLACEHOLDER, adUnitAuth);
-  },
-
-  extractUserSyncFromResponse: function (serverResponse) {
-    const userSyncs = (serverResponse?.body?.ext?.avx_usersync || []);
-    return userSyncs.map(({url, type}) => ({type: PBS_SYNC_TYPES[type], url: url}))
-  },
-
-  buildOrtbRegulations: function (bidderRequest) {
-    const {gdprConsent, uspConsent, gppConsent} = bidderRequest;
-    const ext = {};
-
-    if (gdprConsent) {
-      ext.gdpr = Number(gdprConsent.gdprApplies);
-      ext.gdpr_consent = gdprConsent.consentString;
-    }
-
-    if (gppConsent) {
-      ext.gpp = gppConsent.gppString;
-      ext.gpp_sid = gppConsent.applicableSections;
-    }
-
-    if (uspConsent) {
-      ext.us_privacy = uspConsent;
-    }
-
-    return {
-      coppa: config.getConfig('coppa') ? 1 : 0,
-      ext
-    };
-  },
-
-  getAllowedUserSyncMethod: function (bidderRequest) {
-    const {bidderCode} = bidderRequest;
-    return userSyncUtils.getAllowedSyncMethod(bidderCode);
   },
 
   groupBidRequestsByAdUnit: function (bidRequests) {
@@ -234,7 +158,6 @@ const adverxoUtils = {
 
 export const spec = {
   code: BIDDER_CODE,
-  gvlid: GVLID,
   supportedMediaTypes: [BANNER, NATIVE, VIDEO],
   aliases: [],
 
@@ -324,22 +247,6 @@ export const spec = {
 
       return bid;
     });
-  },
-
-  /**
-   * Register the user sync pixels which should be dropped after the auction.
-   *
-   * @param {SyncOptions} syncOptions Which user syncs are allowed?
-   * @param {ServerResponse[]} serverResponses List of server's responses.
-   * @return {UserSync[]} The user syncs which should be dropped.
-   */
-  getUserSyncs: function (syncOptions, serverResponses) {
-    if (!serverResponses?.length || (!syncOptions.iframeEnabled && !syncOptions.pixelEnabled)) {
-      return [];
-    }
-
-    return serverResponses.map(serverResponse => adverxoUtils.extractUserSyncFromResponse(serverResponse))
-      .flat();
   }
 }
 

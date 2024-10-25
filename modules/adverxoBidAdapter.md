@@ -3,7 +3,7 @@
 ```
 Module Name: Adverxo Bidder Adapter
 Module Type: Bidder Adapter
-Maintainer: prebid-dev@adverxo.com
+Maintainer: developer@adverxo.com
 ```
 
 # Description

@@ -208,7 +208,7 @@ describe('Adverxo Bid Adapter', () => {
       const request = spec.buildRequests(bannerBidRequests, bannerBidderRequest)[0];
 
       expect(request.method).to.equal('POST');
-      expect(request.url).to.equal('https://bid.example.com/auction?id=1&auth=authExample');
+      expect(request.url).to.equal('https://bid.example.com/pickpbs?id=1&auth=authExample');
       expect(request.data.device.ip).to.equal('caller');
       expect(request.data.ext.avx_add_vast_url).to.equal(1);
     });
@@ -218,7 +218,7 @@ describe('Adverxo Bid Adapter', () => {
         const request = spec.buildRequests(nativeBidRequests, nativeBidderRequest)[0];
 
         expect(request.method).to.equal('POST');
-        expect(request.url).to.equal('https://bid.example.com/auction?id=1&auth=authExample');
+        expect(request.url).to.equal('https://bid.example.com/pickpbs?id=1&auth=authExample');
 
         const nativeRequest = JSON.parse(request.data.imp[0]['native'].request);
 
@@ -249,7 +249,7 @@ describe('Adverxo Bid Adapter', () => {
         const request = spec.buildRequests(videoInstreamBidRequests, videoInstreamBidderRequest)[0];
 
         expect(request.method).to.equal('POST');
-        expect(request.url).to.equal('https://bid.example.com/auction?id=1&auth=authExample');
+        expect(request.url).to.equal('https://bid.example.com/pickpbs?id=1&auth=authExample');
 
         const ortbRequest = request.data;
 
@@ -281,146 +281,6 @@ describe('Adverxo Bid Adapter', () => {
 
       expect(request.imp[0].bidfloor).to.equal(3);
       expect(request.imp[0].bidfloorcur).to.equal('USD');
-    });
-  });
-
-  describe('user sync supported method', function () {
-    it('should respect sync disabled', function () {
-      config.setConfig({
-        userSync: {
-          syncEnabled: false,
-          filterSettings: {
-            all: {
-              bidders: '*',
-              filter: 'include'
-            }
-          }
-        }
-      });
-
-      const bidRequests = spec.buildRequests(bannerBidRequests, bannerBidderRequest);
-      expect(bidRequests).to.have.length(1);
-      expect(bidRequests[0].data.ext.avx_usersync).to.be.null;
-    });
-
-    it('on all config allowed should prioritize iframe', function () {
-      config.setConfig({
-        userSync: {
-          syncEnabled: true,
-          filterSettings: {
-            all: {
-              bidders: '*',
-              filter: 'include'
-            }
-          }
-        }
-      });
-
-      const bidRequests = spec.buildRequests(bannerBidRequests, bannerBidderRequest);
-      expect(bidRequests).to.have.length(1);
-      expect(bidRequests[0].data.ext.avx_usersync).to.be.equal(1);
-    });
-
-    it('should respect exclude adverxo iframe filter', function () {
-      config.setConfig({
-        userSync: {
-          syncEnabled: true,
-          filterSettings: {
-            image: {
-              bidders: '*',
-              filter: 'include'
-            },
-            iframe: {
-              bidders: ['adverxo'],
-              filter: 'exclude'
-            }
-          }
-        }
-      });
-
-      const bidRequests = spec.buildRequests(bannerBidRequests, bannerBidderRequest);
-      expect(bidRequests).to.have.length(1);
-      expect(bidRequests[0].data.ext.avx_usersync).to.be.equal(2);
-    });
-
-    it('should respect exclude iframe filter', function () {
-      config.setConfig({
-        userSync: {
-          syncEnabled: true,
-          filterSettings: {
-            image: {
-              bidders: '*',
-              filter: 'include'
-            },
-            iframe: {
-              bidders: '*',
-              filter: 'exclude'
-            }
-          }
-        }
-      });
-
-      const bidRequests = spec.buildRequests(bannerBidRequests, bannerBidderRequest);
-      expect(bidRequests).to.have.length(1);
-      expect(bidRequests[0].data.ext.avx_usersync).to.be.equal(2);
-    });
-
-    it('should respect total exclusion', function () {
-      config.setConfig({
-        userSync: {
-          syncEnabled: true,
-          filterSettings: {
-            image: {
-              bidders: ['adverxo'],
-              filter: 'exclude'
-            },
-            iframe: {
-              bidders: ['adverxo'],
-              filter: 'exclude'
-            }
-          }
-        }
-      });
-
-      const bidRequests = spec.buildRequests(bannerBidRequests, bannerBidderRequest);
-      expect(bidRequests).to.have.length(1);
-      expect(bidRequests[0].data.ext.avx_usersync).to.be.null;
-    });
-  });
-
-  describe('build user consent data', () => {
-    it('shouldn\'t contain gdpr nor ccpa information for default request', function () {
-      const requestData = spec.buildRequests(bannerBidRequests, bannerBidderRequest)[0].data;
-
-      expect(requestData.regs.coppa).to.be.equal(0);
-      expect(requestData.regs.ext).to.be.deep.equal({});
-    });
-
-    it('should contain gdpr-related information if consent is configured', function () {
-      const bidderRequestWithConsent = {
-        ...bannerBidderRequest,
-        gdprConsent: {gdprApplies: true, consentString: 'test-consent-string', vendorData: {}},
-        uspConsent: '1YNN',
-        gppConsent: {gppString: 'DBACNYA~CPXxRfAPXxRfAAfKABENB-CgAAAAAAAAAAYgAAAAAAAA~1YNN', applicableSections: [2]}
-      };
-
-      const requestData = spec.buildRequests(bannerBidRequests, bidderRequestWithConsent)[0].data;
-
-      expect(requestData.regs.ext).to.be.eql({
-        gdpr: 1,
-        gdpr_consent: 'test-consent-string',
-        gpp: 'DBACNYA~CPXxRfAPXxRfAAfKABENB-CgAAAAAAAAAAYgAAAAAAAA~1YNN',
-        gpp_sid: [2],
-        us_privacy: '1YNN'
-      });
-    });
-
-    it('should contain coppa if configured', function () {
-      config.setConfig({coppa: true});
-
-      const requestData = spec.buildRequests(bannerBidRequests, bannerBidderRequest)[0].data;
-
-      expect(requestData.regs.coppa).to.be.equal(1);
     });
   });
 
@@ -697,58 +557,5 @@ describe('Adverxo Bid Adapter', () => {
         expect(bids).to.deep.equal(expectedBids);
       });
     }
-  });
-
-  describe('getUserSyncs', () => {
-    it('should return an empty array if no server responses are provided', () => {
-      const syncs = spec.getUserSyncs({iframeEnabled: true}, []);
-      expect(syncs).to.deep.equal([]);
-    });
-
-    it('should return an iframe sync url when server provided it', () => {
-      const serverResponse = {
-        body: {
-          ext: {
-            avx_usersync: [
-              {
-                type: 1,
-                url: 'userSyncUrl'
-              }
-            ]
-          }
-        }
-      };
-
-      const syncs = spec.getUserSyncs({iframeEnabled: true}, [serverResponse]);
-
-      expect(syncs).to.have.lengthOf(1);
-      expect(syncs[0]).to.deep.equal({
-        type: 'iframe',
-        url: 'userSyncUrl'
-      });
-    });
-
-    it('should return an image sync url when server provided it', () => {
-      const serverResponse = {
-        body: {
-          ext: {
-            avx_usersync: [
-              {
-                type: 2,
-                url: 'userSyncUrl'
-              }
-            ]
-          }
-        }
-      };
-
-      const syncs = spec.getUserSyncs({pixelEnabled: true}, [serverResponse]);
-
-      expect(syncs).to.have.lengthOf(1);
-      expect(syncs[0]).to.deep.equal({
-        type: 'image',
-        url: 'userSyncUrl'
-      });
-    });
   });
 });
