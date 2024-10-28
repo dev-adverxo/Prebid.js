@@ -53,7 +53,7 @@ const ortbConverter = OrtbConverter({
     return imp;
   },
   bidResponse: function (buildBidResponse, bid, context) {
-    bid.adm = bid.adm.replaceAll(`\${AUCTION_PRICE}`, bid.price)
+    bid.adm = bid.adm.replaceAll(`\${AUCTION_PRICE}`, bid.price);
 
     if (FEATURES.NATIVE && ORTB_MTYPES[bid.mtype] === NATIVE) {
       if (typeof bid?.adm === 'string') {
@@ -65,7 +65,7 @@ const ortbConverter = OrtbConverter({
       }
     }
 
-    const result = buildBidResponse(bid, context)
+    const result = buildBidResponse(bid, context);
 
     if (FEATURES.VIDEO) {
       if (bid?.ext?.avx_vast_url) {
@@ -88,7 +88,7 @@ const videoUtils = {
       url: bid.avxVideoRendererUrl,
       loaded: false,
       adUnitCode: bid.adUnitCode
-    })
+    });
 
     try {
       renderer.setRender(this.outstreamRender.bind(this));
@@ -178,7 +178,7 @@ export const spec = {
       return false;
     }
 
-    if (!bid.params.adUnitId || typeof bid.params.auth !== 'string') {
+    if (!bid.params.auth || typeof bid.params.auth !== 'string') {
       utils.logWarn('Adverxo Bid Adapter: auth bid param is required and must be a string');
       return false;
     }
