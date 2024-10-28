@@ -1,5 +1,6 @@
 window.renderAd = function (data) {
   data = Object.fromEntries(data.map(({key, value}) => [key, value]));
+  debugger;
   return `
     <style>
         body {
@@ -61,9 +62,12 @@ window.renderAd = function (data) {
                     <a href="${data.clickUrl}" target="_blank">${data.title}</a>
                 </h1>
             </div>
-            <div class="attribution">
-                ${data.sponsoredBy}
+            <div class="body">
+                ${data.body}
             </div>
+        </div>
+        <div class="body">
+          ${data.cta}
         </div>
     </div>`;
 };
