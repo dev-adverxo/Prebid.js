@@ -1,0 +1,4 @@
+[90m2024-11-08T15:07:27.246Z[39m [32mDEBUG[39m [97m@wdio/browserstack-service[39m username/accesskey not passed
+[90m2024-11-08T15:07:27.247Z[39m [32mDEBUG[39m [97m@wdio/browserstack-service[39m app is not defined in browserstack-service config, skipping ...
+[90m2024-11-08T15:07:27.247Z[39m [32mDEBUG[39m [97m@wdio/browserstack-service[39m Sending launch start event
+[90m2024-11-08T15:07:27.727Z[39m [32mDEBUG[39m [97m@wdio/browserstack-service[39m [Start_Build] Success response: {"errorTraceId":"ad34fe60-15bb-4729-a60c-0828bb96c20a","message":"Access to BrowserStack denied due to incorrect credentials.","errorType":"ERROR_INVALID_CREDENTIALS"}
